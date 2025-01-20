@@ -75,7 +75,7 @@ func udpSender(targetIP string, targetPort int, done chan bool) {
 	}
 }
 
-func main() {
+func man2() {
 	var workspaceNumber int
 	fmt.Print("Enter your workspace number: ")
 	fmt.Scan(&workspaceNumber)

@@ -31,7 +31,7 @@ func listenForServer() string {
 	return remoteaddr.IP.String()
 }
 
-func main() {
+func man() {
 	serverIP := listenForServer()
 	fmt.Println("Server IP: ", serverIP)
 }
