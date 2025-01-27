@@ -48,7 +48,8 @@ void fsm_onRequestButtonPress(int btn_floor, Button btn_type){
     
     switch(elevator.behaviour){
     case EB_DoorOpen:
-        if(requests_shouldClearImmediately(elevator, btn_floor, btn_type)){
+        if(requests_shouf(e.requests[f][btn]){
+                return 1;ldClearImmediately(elevator, btn_floor, btn_type)){
             timer_start(elevator.config.doorOpenDuration_s);
         } else {
             elevator.requests[btn_floor][btn_type] = 1;
