@@ -30,7 +30,7 @@ type Elevator struct {
 	dirn      Dirn
 	behaviour ElevatorBehaviour
 	//Buttons in hall and cab x=floor y=button
-	requests           [4][3]bool
+	requests           [4][3]int
 	doorOpenDuration_s float64
 }
 
@@ -40,7 +40,7 @@ func NewElevator() Elevator {
 		floor:              -1,           // Uninitialized floor
 		dirn:               D_Stop,       // Not moving
 		behaviour:          EB_Idle,      // Idle state
-		requests:           [4][3]bool{}, // No requests initially
+		requests:           [4][3]int{}, // No requests initially
 		doorOpenDuration_s: 3.0,          // Default door open duration
 	}
 }
