@@ -1,12 +1,16 @@
 package fsm
 
+// NumFloors and NumButtons are global variables
+var NumFloors int = 4
+var NumButtons int = 3
+
 // Direction type. up = 1, down = 0
 type Direction int
 
 const (
-	Up    Direction = 1
-	Down  Direction = -1
-	Still Direction = 0
+	D_Up   Direction = 1
+	D_Down Direction = -1
+	D_Stop Direction = 0
 )
 
 // ElevatorBehaviour type. Idle = 0, DoorOpen = 1, Moving = 2
@@ -28,4 +32,15 @@ type Elevator struct {
 	//Buttons in hall and cab x=floor y=button
 	requests           [4][3]bool
 	doorOpenDuration_s float64
+}
+
+// Elevator initializer function
+func NewElevator() Elevator {
+	return Elevator{
+		floor:              -1,           // Uninitialized floor
+		movingDirection:    D_Stop,       // Not moving
+		behaviour:          EB_Idle,      // Idle state
+		requests:           [4][3]bool{}, // No requests initially
+		doorOpenDuration_s: 3.0,          // Default door open duration
+	}
 }
