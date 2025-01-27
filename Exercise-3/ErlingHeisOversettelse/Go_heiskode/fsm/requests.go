@@ -2,11 +2,10 @@ package fsm
 
 import (
 	"Driver-go/elevio"
-	"fmt"
 )
 
 type DirnBehaviourPair struct {
-	dirn      elevio.MotorDirection
+	dirn      Dirn
 	behaviour ElevatorBehaviour
 }
 
@@ -44,7 +43,68 @@ func requests_here(elevator Elevator) bool {
 }
 
 
-func requests_choose_direction(elevator Elevator) DirnBehaviourPair {
-	switch elevator.dirn {
-		
+func requests_chooseDirection(e Elevator) DirnBehaviourPair {
+	switch e.dirn {
+	case D_Up:
+		if requests_above(e) {
+			return DirnBehaviourPair{D_Up, EB_Moving}
+		} else if requests_here(e) {
+			return DirnBehaviourPair{D_Stop, EB_DoorOpen}
+		} else if requests_below(e) {
+			return DirnBehaviourPair{D_Down, EB_Moving}
+		} else {
+			return DirnBehaviourPair{D_Stop, EB_Idle}
+		}
+	case D_Down:
+		if requests_below(e) {
+			return DirnBehaviourPair{D_Down, EB_Moving}
+		} else if requests_here(e) {
+			return DirnBehaviourPair{D_Stop, EB_DoorOpen}
+		} else if requests_above(e) {
+			return DirnBehaviourPair{D_Up, EB_Moving}
+		} else {
+			return DirnBehaviourPair{D_Stop, EB_Idle}
+		}
+	case D_Stop:
+		if requests_here(e) {
+			return DirnBehaviourPair{D_Stop, EB_DoorOpen}
+		} else if requests_above(e) {
+			return DirnBehaviourPair{D_Up, EB_Moving}
+		} else if requests_below(e) {
+			return DirnBehaviourPair{D_Down, EB_Moving}
+		} else {
+			return DirnBehaviourPair{D_Stop, EB_Idle}
+		}
+	default:
+		return DirnBehaviourPair{D_Stop, EB_Idle}
 	}
+}
+
+
+
+func requests_shouldStop(e Elevator) bool {
+	switch e.dirn {
+	case D_Down:
+		return e.requests[e.floor][elevio.BT_HallDown] ||
+			e.requests[e.floor][elevio.BT_Cab] ||
+			!requests_below(e)
+	case D_Up:
+		return e.requests[e.floor][elevio.BT_HallUp] ||
+			e.requests[e.floor][elevio.BT_Cab] ||
+			!requests_above(e)
+	case D_Stop:
+		fallthrough
+	default:
+		return true
+	}
+}
+
+func requests_shouldClearImmediately(e Elevator, btn_floor int, btn_type elevio.ButtonType) bool {
+	return e.floor == btn_floor && 
+	(
+		(e.dirn == D_Up   && btn_type == elevio.BT_HallUp)    ||
+		(e.dirn == D_Down && btn_type == elevio.BT_HallDown)  ||
+		e.dirn == D_Stop ||
+		btn_type == elevio.BT_Cab)
+}
+
