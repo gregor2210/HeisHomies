@@ -99,32 +99,31 @@ func fsm_onFloorArrival(newFloor int) {
 	fmt.Println("\nNew state:")
 }
 
-
-func fsmOnDoorTimeout(){
-	elevator.floor=newFloor//usikker på newfloor
-	switch(ElevatorBehaviour){
+func fsmOnDoorTimeout() {
+	elevator.floor = newFloor //usikker på newfloor
+	switch ElevatorBehaviour {
 	case EB_DoorOpen:
-	//Usikker på hvordan DirnBehaviourPair er siden ikke er laget enda
+		//Usikker på hvordan DirnBehaviourPair er siden ikke er laget enda
 
-	DirnBehaviourPair pair = requestsChooseDirection(elevator)
-	elevator.dirn = pair.dirn
-	elevator.dirn = pair.behaviour
-		switch(elevator.behaviour){
+		var pair DirnBehaviourPair = requestsChooseDirection(elevator)
+		elevator.dirn = pair.dirn
+		elevator.dirn = pair.behaviour
+		switch elevator.behaviour {
 		case EB_DoorOpen:
-			TimerStart(elevator.config.doorOpenDuration_s)
+			TimerStart(elevator.doorOpenDuration_s)
 			//time.Sleep(time.Duration(elevator.config.doorOpenDuration_s) * time.Second))
-            //Denne er ikke god nok, siden den låser mottak av ordre...
+			//Denne er ikke god nok, siden den låser mottak av ordre...
 			elevator = requests_clearAtCurrentFloor(elevator)
-            setAllLights(elevator)
-			break;
+			setAllLights(elevator)
+			break
 		case EB_Moving:
 		case EB_Idle:
 			outputDevice.doorLight(0)
 			outputDevice.motorDirection(elevator.dirn)
-			break;
+			break
 		}
 
 	default:
-		break;
+		break
 	}
 }
