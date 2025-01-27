@@ -3,7 +3,6 @@ package fsm
 import (
 	"Driver-go/elevio"
 	"fmt"
-	
 )
 
 func Fsm_button_clicked_selecter(button elevio.ButtonType, floor int) {
@@ -29,20 +28,15 @@ func fsm_hall_down_button_pressed(floor int) {
 	fmt.Println("Hall down button pressed at floor ", floor)
 }
 
-
-
-
-
 var elevator Elevator
 
 func setAllLights(elevator Elevator) {
-	for floor := 0; floor < _numFloors; floor++ {
-		for btn := 0; btn < N_BUTTONS; btn++ {
+	for floor := 0; floor < NumFloors; floor++ {
+		for btn := 0; btn < NumButtons; btn++ {
 			elevio.SetButtonLamp(elevio.ButtonType(btn), floor, elevator.requests[floor][btn])
 		}
 	}
 }
-
 
 func fsm_onInitBetweenFloors() {
 	elevio.SetMotorDirection(elevio.MD_Down)
@@ -52,7 +46,7 @@ func fsm_onInitBetweenFloors() {
 
 func fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
 	fmt.Printf("\n\nfsm_onRequestButtonPress(%d, %s)\n", btn_floor)
-	
+
 	switch elevator.behaviour {
 	case EB_DoorOpen:
 		if requests_shouldClearImmediately(elevator, btn_floor, btn_type) {

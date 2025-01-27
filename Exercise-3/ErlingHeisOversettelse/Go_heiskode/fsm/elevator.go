@@ -1,17 +1,12 @@
 package fsm
 
+import (
+	"Driver-go/elevio"
+)
+
 // NumFloors and NumButtons are global variables
 var NumFloors int = 4
 var NumButtons int = 3
-
-// Direction type. up = 1, down = 0
-type Direction int
-
-const (
-	D_Up   Direction = 1
-	D_Down Direction = -1
-	D_Stop Direction = 0
-)
 
 // ElevatorBehaviour type. Idle = 0, DoorOpen = 1, Moving = 2
 type ElevatorBehaviour int
@@ -26,9 +21,9 @@ const (
 // is used to keep track of the elevators state
 // is basicly a elevator object
 type Elevator struct {
-	floor           int
-	movingDirection Direction
-	behaviour       ElevatorBehaviour
+	floor     int
+	dirn      elevio.MotorDirection
+	behaviour ElevatorBehaviour
 	//Buttons in hall and cab x=floor y=button
 	requests           [4][3]bool
 	doorOpenDuration_s float64
@@ -37,10 +32,10 @@ type Elevator struct {
 // Elevator initializer function
 func NewElevator() Elevator {
 	return Elevator{
-		floor:              -1,           // Uninitialized floor
-		movingDirection:    D_Stop,       // Not moving
-		behaviour:          EB_Idle,      // Idle state
-		requests:           [4][3]bool{}, // No requests initially
-		doorOpenDuration_s: 3.0,          // Default door open duration
+		floor:              -1,             // Uninitialized floor
+		dirn:               elevio.MD_Stop, // Not moving
+		behaviour:          EB_Idle,        // Idle state
+		requests:           [4][3]bool{},   // No requests initially
+		doorOpenDuration_s: 3.0,            // Default door open duration
 	}
 }
