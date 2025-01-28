@@ -34,9 +34,9 @@ func main() {
 	fmt.Println("Started!")
 
 	//inputPollRateMs := 25
-	elevator := fsm.Elevator{ //lager en ny heis
+	//elevator := fsm.Elevator{ //lager en ny heis
 
-	}
+	//}
 
 	for {
 		select {
