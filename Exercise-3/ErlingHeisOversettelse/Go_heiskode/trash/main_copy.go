@@ -2,9 +2,7 @@ package main
 
 import (
 	"Driver-go/elevio"
-	"Driver-go/fsm"
 	"fmt"
-	"time"
 )
 
 func main() {
@@ -13,16 +11,13 @@ func main() {
 
 	elevio.Init("localhost:15657", numFloors)
 
-	//var d elevio.MotorDirection = elevio.MD_Up
+	var d elevio.MotorDirection = elevio.MD_Up
 	//elevio.SetMotorDirection(d)
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
 	drv_stop := make(chan bool)
-
-	// Channel to receive timer timeout events
-	timerTimeoutChan := make(chan bool)
 
 	go elevio.PollButtons(drv_buttons)
 	//søker igjennom alle etasjene og sjekker alle typer knapper for den etasjen.
@@ -35,47 +30,46 @@ func main() {
 	go elevio.PollStopButton(drv_stop)
 	//Sjekker om stopknappen er trykket inn. Den vil skrive true eller false til chanelen drv_stop når statusen endrer seg.
 
-	go fsm.PollTimerTimeout(timerTimeoutChan)
-
 	fmt.Println("Started!")
 
+	//inputPollRateMs := 25
 	//elevator := fsm.Elevator{ //lager en ny heis
 	//e := fsm.NewElevator()
 
 	//}
-	inputPollRateMs := 25
-	prev_floor := -1
+
 	for {
 		select {
 		case a := <-drv_buttons:
-			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
-			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
+			//elevio.SetButtonLamp(a.Button, a.Floor, true)
+			//fsm.Fsm_button_clicked_selecter(a.Button, a.Floor)
 
 		case a := <-drv_floors:
-			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
-			if a != -1 && a != prev_floor {
-				fsm.Fsm_onFloorArrival(a)
+			if a == numFloors-1 {
+				d = elevio.MD_Down
+			} else if a == 0 {
+				d = elevio.MD_Up
 			}
-			prev_floor = a
+			elevio.SetMotorDirection(d)
 
-		case a := <-timerTimeoutChan:
+		case a := <-drv_obstr:
+			fmt.Printf("%+v\n", a)
 			if a {
-				fmt.Println("Door timeout")
-				fsm.TimerStop()
-				fsm.Fsm_onDoorTimeout()
+				elevio.SetMotorDirection(elevio.MD_Stop)
+			} else {
+				elevio.SetMotorDirection(d)
 			}
 
-			//case a := <-drv_obstr:
-			//fmt.Printf("%+v\n", a)
-
-			//case a := <-drv_stop:
-			//fmt.Printf("%+v\n", a)
-
+		case a := <-drv_stop:
+			fmt.Printf("%+v\n", a)
+			for f := 0; f < numFloors; f++ {
+				for b := elevio.ButtonType(0); b < 3; b++ {
+					elevio.SetButtonLamp(b, f, false)
+				}
+			}
 		}
-		time.Sleep(500 * time.Duration(inputPollRateMs))
-
 	}
 
 }

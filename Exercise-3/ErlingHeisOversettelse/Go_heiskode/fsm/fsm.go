@@ -5,30 +5,9 @@ import (
 	"fmt"
 )
 
-func Fsm_button_clicked_selecter(button elevio.ButtonType, floor int) {
-	switch button {
-	case elevio.BT_Cab:
-		fsm_cab_button_pressed(floor)
-	case elevio.BT_HallUp:
-		fsm_hall_up_button_pressed(floor)
-	default:
-		fsm_hall_down_button_pressed(floor)
-	}
-}
+var elevator Elevator = NewElevator()
 
-func fsm_cab_button_pressed(floor int) {
-	fmt.Println("Cab button pressed at floor ", floor)
-}
-
-func fsm_hall_up_button_pressed(floor int) {
-	fmt.Println("Hall up button pressed at floor ", floor)
-}
-
-func fsm_hall_down_button_pressed(floor int) {
-	fmt.Println("Hall down button pressed at floor ", floor)
-}
-
-var elevator Elevator
+//ElevatorOUtputDevice er den utdelte go driverern!
 
 func setAllLights(elevator Elevator) {
 	for floor := 0; floor < NumFloors; floor++ {
@@ -44,30 +23,33 @@ func fsm_onInitBetweenFloors() {
 	elevator.behaviour = EB_Moving
 }
 
-func fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
-	fmt.Printf("\n\nfsm_onRequestButtonPress(%d, %s)\n", btn_floor)
+func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
+	fmt.Printf("\n\nfsm_onRequestButtonPress(%d)\n", btn_floor)
 
 	switch elevator.behaviour {
 	case EB_DoorOpen:
 		if requests_shouldClearImmediately(elevator, btn_floor, btn_type) {
-			timer_start(elevator.doorOpenDuration_s)
+			TimerStart(elevator.doorOpenDuration_s)
 		} else {
-			elevator.requests[btn_floor][btn_type] = 1
+			elevator.requests[btn_floor][btn_type] = true
 		}
 	case EB_Moving:
-		elevator.requests[btn_floor][btn_type] = 1
+		elevator.requests[btn_floor][btn_type] = true
+
 	case EB_Idle:
-		elevator.requests[btn_floor][btn_type] = 1
-		pair := requests_chooseDirection(elevator)
+		elevator.requests[btn_floor][btn_type] = true
+		var pair DirnBehaviourPair = requests_chooseDirection(elevator)
 		elevator.dirn = pair.dirn
 		elevator.behaviour = pair.behaviour
 		switch pair.behaviour {
 		case EB_DoorOpen:
 			elevio.SetDoorOpenLamp(true)
-			timer_start(elevator.config.doorOpenDuration_s)
+			TimerStart(elevator.doorOpenDuration_s)
 			elevator = requests_clearAtCurrentFloor(elevator)
+
 		case EB_Moving:
-			elevio.SetMotorDirection(elevator.dirn)
+			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.dirn))
+
 		case EB_Idle:
 		}
 	}
@@ -77,7 +59,7 @@ func fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
 	fmt.Println("\nNew state:")
 }
 
-func fsm_onFloorArrival(newFloor int) {
+func Fsm_onFloorArrival(newFloor int) {
 	fmt.Printf("\n\nfsm_onFloorArrival(%d)\n", newFloor)
 	elevator.floor = newFloor
 
@@ -99,31 +81,28 @@ func fsm_onFloorArrival(newFloor int) {
 	fmt.Println("\nNew state:")
 }
 
-func fsmOnDoorTimeout() {
-	elevator.floor = newFloor //usikker på newfloor
-	switch ElevatorBehaviour {
-	case EB_DoorOpen:
-		//Usikker på hvordan DirnBehaviourPair er siden ikke er laget enda
+func Fsm_onDoorTimeout() {
+	fmt.Printf("\n\nfsm_onDoorTimeout()\n")
 
-		var pair DirnBehaviourPair = requestsChooseDirection(elevator)
+	switch elevator.behaviour {
+	case EB_DoorOpen:
+		var pair DirnBehaviourPair = requests_chooseDirection(elevator)
 		elevator.dirn = pair.dirn
-		elevator.dirn = pair.behaviour
+		elevator.behaviour = pair.behaviour
+
 		switch elevator.behaviour {
 		case EB_DoorOpen:
 			TimerStart(elevator.doorOpenDuration_s)
-			//time.Sleep(time.Duration(elevator.config.doorOpenDuration_s) * time.Second))
-			//Denne er ikke god nok, siden den låser mottak av ordre...
 			elevator = requests_clearAtCurrentFloor(elevator)
 			setAllLights(elevator)
-			break
 		case EB_Moving:
 		case EB_Idle:
-			outputDevice.doorLight(0)
-			outputDevice.motorDirection(elevator.dirn)
-			break
+			elevio.SetDoorOpenLamp(false)
+			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.dirn))
 		}
 
 	default:
-		break
 	}
+
+	fmt.Println("\nNew state:")
 }

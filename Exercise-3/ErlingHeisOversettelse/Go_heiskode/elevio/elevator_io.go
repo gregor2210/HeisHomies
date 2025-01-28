@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// hvis denne endres, husk å endre i timer.go også
 const _pollRate = 20 * time.Millisecond
 
 var _initialized bool = false

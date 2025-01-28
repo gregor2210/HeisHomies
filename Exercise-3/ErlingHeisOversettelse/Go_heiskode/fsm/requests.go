@@ -9,11 +9,9 @@ type DirnBehaviourPair struct {
 	behaviour ElevatorBehaviour
 }
 
-
-
 func requests_above(elevator Elevator) bool {
 	for i := elevator.floor + 1; i < NumFloors; i++ {
-		for j := 0; j < NumButtons ; j++ {
+		for j := 0; j < NumButtons; j++ {
 			if elevator.requests[i][j] {
 				return true
 			}
@@ -24,7 +22,7 @@ func requests_above(elevator Elevator) bool {
 
 func requests_below(elevator Elevator) bool {
 	for i := 0; i < elevator.floor; i++ {
-		for j := 0; j < NumButtons ; j++ {
+		for j := 0; j < NumButtons; j++ {
 			if elevator.requests[i][j] {
 				return true
 			}
@@ -34,14 +32,13 @@ func requests_below(elevator Elevator) bool {
 }
 
 func requests_here(elevator Elevator) bool {
-	for j := 0; j < NumButtons ; j++ {
+	for j := 0; j < NumButtons; j++ {
 		if elevator.requests[elevator.floor][j] {
 			return true
 		}
 	}
 	return false
 }
-
 
 func requests_chooseDirection(e Elevator) DirnBehaviourPair {
 	switch e.dirn {
@@ -118,8 +115,10 @@ func requests_clearAtCurrentFloor(e Elevator) Elevator {
 			e.requests[e.floor][elevio.BT_HallUp] = false
 		}
 		e.requests[e.floor][elevio.BT_HallDown] = false
+
 	case D_Stop:
 		fallthrough
+
 	default:
 		e.requests[e.floor][elevio.BT_HallUp] = false
 		e.requests[e.floor][elevio.BT_HallDown] = false

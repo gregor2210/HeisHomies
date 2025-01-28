@@ -1,8 +1,26 @@
 package fsm
 
+import (
+	"Driver-go/elevio"
+)
+
 // NumFloors and NumButtons are global variables
 var NumFloors int = 4
 var NumButtons int = 3
+
+// Converting Dirn to MotorDirection
+func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
+	switch dirn {
+	case D_Up:
+		return elevio.MD_Up
+	case D_Down:
+		return elevio.MD_Down
+	case D_Stop:
+		return elevio.MD_Stop
+	default:
+		return elevio.MD_Stop
+	}
+}
 
 // Direction type. up = 1, down = 0
 type Dirn int
@@ -30,17 +48,17 @@ type Elevator struct {
 	dirn      Dirn
 	behaviour ElevatorBehaviour
 	//Buttons in hall and cab x=floor y=button
-	requests           [4][3]int
+	requests           [4][3]bool
 	doorOpenDuration_s float64
 }
 
 // Elevator initializer function
 func NewElevator() Elevator {
 	return Elevator{
-		floor:              -1,          // Uninitialized floor
-		dirn:               D_Stop,      // Not moving
-		behaviour:          EB_Idle,     // Idle state
-		requests:           [4][3]int{}, // No requests initially
-		doorOpenDuration_s: 3.0,         // Default door open duration
+		floor:              -1,           // Uninitialized floor
+		dirn:               D_Stop,       // Not moving
+		behaviour:          EB_Idle,      // Idle state
+		requests:           [4][3]bool{}, // No requests initially
+		doorOpenDuration_s: 3.0,          // Default door open duration
 	}
 }
