@@ -86,22 +86,35 @@ func Fsm_onDoorTimeout() {
 
 	switch elevator.behaviour {
 	case EB_DoorOpen:
+		// Velg retning basert på forespørsler
 		var pair DirnBehaviourPair = requests_chooseDirection(elevator)
 		elevator.dirn = pair.dirn
 		elevator.behaviour = pair.behaviour
 
 		switch elevator.behaviour {
 		case EB_DoorOpen:
+			// Restart dørtimeren
 			TimerStart(elevator.doorOpenDuration_s)
+
+			// Rydd opp forespørslene i nåværende etasje
 			elevator = requests_clearAtCurrentFloor(elevator)
+
+			// Oppdater alle lysindikatorer
 			setAllLights(elevator)
+
 		case EB_Moving:
-		case EB_Idle:
-			elevio.SetDoorOpenLamp(false)
+			// Start motoren
+			elevio.SetDoorOpenLamp(false) // Slå av dørindikatoren
 			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.dirn))
+			fmt.Printf("Motor started moving in direction: %v\n", elevator.dirn)
+
+		case EB_Idle:
+			// Ingen forespørsler igjen, sett til idle
+			elevio.SetDoorOpenLamp(false)
 		}
 
 	default:
+		// Ingenting å gjøre hvis tilstanden ikke er EB_DoorOpen
 	}
 
 	fmt.Println("\nNew state:")
