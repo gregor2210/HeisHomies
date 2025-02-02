@@ -47,12 +47,13 @@ func main() {
 	prev_floor := -1
 	for {
 		select {
-		case a := <-drv_buttons:
+		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
+		case a := <-drv_buttons:			// Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
 			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
 
-		case a := <-drv_floors:
+		case a := <-drv_floors:		// Hvis det kommer en etasje (int) fra chanelen drv_floors
 			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
 			if a != -1 && a != prev_floor {
@@ -60,7 +61,7 @@ func main() {
 			}
 			prev_floor = a
 
-		case a := <-timerTimeoutChan:
+		case a := <-timerTimeoutChan:		// Hvis det kommer en bool, True, fra chanelen timerTimeoutChan
 			if a {
 				fmt.Println("Door timeout")
 				fsm.TimerStop()
