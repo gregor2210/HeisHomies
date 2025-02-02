@@ -9,6 +9,7 @@ var NumFloors int = 4
 var NumButtons int = 3
 
 // Converting Dirn to MotorDirection
+// For å få hvilken retning motoren fysisk skal gå basert på planlagt retning
 func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
 	switch dirn {
 	case D_Up:

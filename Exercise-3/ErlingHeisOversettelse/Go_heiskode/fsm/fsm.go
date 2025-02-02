@@ -17,44 +17,44 @@ func setAllLights(elevator Elevator) {
 	}
 }
 
-func fsm_onInitBetweenFloors() {
-	elevio.SetMotorDirection(elevio.MD_Down)
-	elevator.dirn = elevio.MD_Down
-	elevator.behaviour = EB_Moving
-}
+// func fsm_onInitBetweenFloors() {
+// 	elevio.SetMotorDirection(elevio.MD_Down)
+// 	elevator.dirn = elevio.MD_Down
+// 	elevator.behaviour = EB_Moving
+// }
 
 func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
 	fmt.Printf("\n\nfsm_onRequestButtonPress(%d)\n", btn_floor)
 
 	switch elevator.behaviour {
 	case EB_DoorOpen:
-		if requests_shouldClearImmediately(elevator, btn_floor, btn_type) {
-			TimerStart(elevator.doorOpenDuration_s)
+		if requests_shouldClearImmediately(elevator, btn_floor, btn_type) {		// Hvis heisen allerede er i etasjen og knappen er trykket inn
+			TimerStart(elevator.doorOpenDuration_s)								// Start dørtimeren på nytt
 		} else {
-			elevator.requests[btn_floor][btn_type] = true
+			elevator.requests[btn_floor][btn_type] = true						// Ellers legg forespørselen til i køen
 		}
-	case EB_Moving:
-		elevator.requests[btn_floor][btn_type] = true
+	case EB_Moving:																
+		elevator.requests[btn_floor][btn_type] = true							// I bevegelse, så ikke gjøre annet enn å legge til i køen			
 
 	case EB_Idle:
-		elevator.requests[btn_floor][btn_type] = true
-		var pair DirnBehaviourPair = requests_chooseDirection(elevator)
-		elevator.dirn = pair.dirn
-		elevator.behaviour = pair.behaviour
+		elevator.requests[btn_floor][btn_type] = true							// Heisen er i ro, må finne retning og starte bevegelse
+		var pair DirnBehaviourPair = requests_chooseDirection(elevator)		 	 // Velg retning basert på forespørsler
+		elevator.dirn = pair.dirn												  // Oppdater retning
+		elevator.behaviour = pair.behaviour							 			 // Oppdater tilstand					
 		switch pair.behaviour {
-		case EB_DoorOpen:
+		case EB_DoorOpen:														  // Hvis heisen skal stoppe i etasjen den står i			  
 			elevio.SetDoorOpenLamp(true)
 			TimerStart(elevator.doorOpenDuration_s)
 			elevator = requests_clearAtCurrentFloor(elevator)
 
-		case EB_Moving:
-			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.dirn))
+		case EB_Moving:												 			 // Hvis heisen skal starte bevegelse
+			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.dirn))	 // Start motoren
 
 		case EB_Idle:
 		}
 	}
 
-	setAllLights(elevator)
+	setAllLights(elevator) 															// Oppdater lysindikatorene			
 
 	fmt.Println("\nNew state:")
 }
@@ -66,11 +66,11 @@ func Fsm_onFloorArrival(newFloor int) {
 	elevio.SetFloorIndicator(elevator.floor)
 
 	switch elevator.behaviour {
-	case EB_Moving:
-		if requests_shouldStop(elevator) {
-			elevio.SetMotorDirection(elevio.MD_Stop)
-			elevio.SetDoorOpenLamp(true)
-			elevator = requests_clearAtCurrentFloor(elevator)
+	case EB_Moving:																
+		if requests_shouldStop(elevator) {									// Hvis heisen skal stoppe i etasjen den er i, enten fordi request i riktig retning i etasjen eller cab, eller ingen flere forespørsler										
+			elevio.SetMotorDirection(elevio.MD_Stop)						// Stopp motoren
+			elevio.SetDoorOpenLamp(true)									// Åpne døren	
+			elevator = requests_clearAtCurrentFloor(elevator)				// Rydd opp forespørslene i etasjen
 			TimerStart(elevator.doorOpenDuration_s)
 			setAllLights(elevator)
 			elevator.behaviour = EB_DoorOpen

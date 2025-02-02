@@ -56,7 +56,7 @@ func main() {
 		case a := <-drv_floors:		// Hvis det kommer en etasje (int) fra chanelen drv_floors
 			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
-			if a != -1 && a != prev_floor {
+			if a != -1 && a != prev_floor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
 				fsm.Fsm_onFloorArrival(a)
 			}
 			prev_floor = a
