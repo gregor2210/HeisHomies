@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	snd_addr = "127.0.0.1:30000"							// IP address of the primary
-	rcv_addr = ":30000"								// IP address of the backup			
+	snd_addr = "127.0.0.1:40000"							// IP address of the primary
+	rcv_addr = ":40000"								// IP address of the backup			
 	TIMEOUT = 3						// Timeout for the backup
 	TIMEPULSE = 1					// Time between heartbeats
 )
@@ -34,15 +34,15 @@ func primary() {
 	for {
 
 		fmt.Printf("Primary teller: %d\n", count)
-		count++
 
-		_, err = conn.Write([]byte("Hello from primary"))    // Sender melding til server
+
+		_, err = conn.Write([]byte(fmt.Sprintf("%d", count)))    // Sender melding til server
 		
 		if err != nil {
 			fmt.Println("Error: ", err)
 			return
 		}
-
+		count++
 		time.Sleep(TIMEPULSE * time.Second)
 
 
@@ -50,44 +50,43 @@ func primary() {
 
 }
 
-// func backup() {
-// 	rcv_UDP_addr, err := net.ResolveUDPAddr("udp", rcv_addr)            // Lager motta adresse for UDP
-// 	if err != nil {
-// 		fmt.Println("Error: ", err)
-// 		return
-// 	}
+func backup() {
+	rcv_UDP_addr, err := net.ResolveUDPAddr("udp", rcv_addr)            // Lager motta adresse for UDP
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
 
-// 	conn, err := net.ListenUDP("udp", rcv_UDP_addr)                    // Lager lyttekanal for motta adressen
-// 	if err != nil {
-// 		fmt.Println("Error: ", err)
-// 		return
-// 	}
-// 	defer conn.Close()
+	conn, err := net.ListenUDP("udp", rcv_UDP_addr)                    // Lager lyttekanal for motta adressen
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+	defer conn.Close()
 
-// 	fmt.Println("Connected to client")
+	fmt.Println("Connected to client")
 
-// 	buffer := make([]byte, 1024)                                     // Lager buffer for å motta meldinger
-// 	//lastHeartbeat := time.Now()                      
+	buffer := make([]byte, 1024)  
+	for {
+		conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))            // Setter timeout for motta adressen
+		n, _, err := conn.ReadFromUDP(buffer)		                          // Leser fra bufferen	
+		if err != nil {
+			fmt.Println("Error: ", err)
+			return
+		}
+		fmt.Printf("Backup received number: %s\n", string(buffer[:n]))
+	
+		time.Sleep(TIMEPULSE * time.Second)
+	}
 
-// 	for {
-// 		conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))            // Setter timeout for motta adressen
-// 		_, _, err := conn.ReadFromUDP(buffer)		                          // Leser fra bufferen	
-// 		if err != nil {
-// 			fmt.Println("Error: ", err)
-// 			return
-// 		}
-
-// 		//lastHeartbeat = time.Now()                          // Setter siste heartbeat til nåværende tidspunkt
-// 		fmt.Println("Backup received heartbeat")
-// 	}
-// }
-
-
+}
 
 
 
 
 func main() {
-	primary()
+
+	go primary() // Kjører primary i en egen tråd
+	backup() // Kjører backup i hovedtråden
 }
 
