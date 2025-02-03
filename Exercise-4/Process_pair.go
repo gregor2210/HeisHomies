@@ -13,8 +13,8 @@ const (
 	TIMEPULSE = 1
 )
 
-funpc primary() {
-	conn, err := net.Dial("ud", UDP_ADDR + UDP_PORT)
+func primary() {
+	conn, err := net.Dial("udp", UDP_ADDR + UDP_PORT)
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
