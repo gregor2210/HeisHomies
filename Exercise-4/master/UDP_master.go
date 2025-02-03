@@ -31,11 +31,11 @@ func main() {
 	//buffer :=make([]byte, 1024)
 	num_str := strconv.Itoa(num)
 
-	for i := 0; i <= 100; i++ {
+	for i := 0; i <= 1000; i++ {
 		num_str = strconv.Itoa(i)
 		send_udp_message(conn, num_str)
 		time.Sleep(1 * time.Second)
-		fmt.Println("Sent to server: ", num_str)
+		fmt.Println("Sent from Master: ", num_str)
 	}
 
 }
