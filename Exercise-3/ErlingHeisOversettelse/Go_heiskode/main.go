@@ -48,12 +48,12 @@ func main() {
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
-		case a := <-drv_buttons:			// Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
+		case a := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
 			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
 
-		case a := <-drv_floors:		// Hvis det kommer en etasje (int) fra chanelen drv_floors
+		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
 			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
 			if a != -1 && a != prev_floor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
@@ -61,14 +61,18 @@ func main() {
 			}
 			prev_floor = a
 
-		case a := <-timerTimeoutChan:		// Hvis det kommer en bool, True, fra chanelen timerTimeoutChan
+		case a := <-timerTimeoutChan: // Hvis det kommer en bool, True, fra chanelen timerTimeoutChan
 			if a {
 				fmt.Println("Door timeout")
 				fsm.TimerStop()
 				fsm.Fsm_onDoorTimeout()
 			}
 
-			//case a := <-drv_obstr:
+		case a := <-drv_obstr:
+			fmt.Println("Obstruction event toggle")
+			fsm.SetObsructionStatus(a)
+			fsm.TimerStart(3)
+
 			//fmt.Printf("%+v\n", a)
 
 			//case a := <-drv_stop:

@@ -51,6 +51,7 @@ type Elevator struct {
 	//Buttons in hall and cab x=floor y=button
 	requests           [4][3]bool
 	doorOpenDuration_s float64
+	obstruction        bool
 }
 
 // Elevator initializer function
@@ -60,6 +61,12 @@ func NewElevator() Elevator {
 		dirn:               D_Stop,       // Not moving
 		behaviour:          EB_Idle,      // Idle state
 		requests:           [4][3]bool{}, // No requests initially
-		doorOpenDuration_s: 3.0,          // Default door open duration
+		doorOpenDuration_s: 3.0,
+		obstruction:        false, // Default door open duration
 	}
+}
+
+// Function to set the obstruction status of the elevator
+func SetObsructionStatus(status bool) {
+	elevator.obstruction = status
 }

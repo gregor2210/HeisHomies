@@ -36,6 +36,7 @@ func TimerStop() {
 	timerActive = false
 }
 
+// 
 func TimerTimedOut() bool {
-	return timerActive && getWallTime().After(timerEndTime)
+	return timerActive && getWallTime().After(timerEndTime) && !(elevator.obstruction)
 }
