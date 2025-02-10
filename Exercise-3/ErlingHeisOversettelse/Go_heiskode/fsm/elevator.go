@@ -2,6 +2,8 @@ package fsm
 
 import (
 	"Driver-go/elevio"
+	"fmt"
+	"time"
 )
 
 // NumFloors and NumButtons are global variables
@@ -56,7 +58,7 @@ type Elevator struct {
 
 // Elevator initializer function
 func NewElevator() Elevator {
-	return Elevator{
+	var elevator_setup Elevator = Elevator{
 		floor:              -1,           // Uninitialized floor
 		dirn:               D_Stop,       // Not moving
 		behaviour:          EB_Idle,      // Idle state
@@ -64,9 +66,25 @@ func NewElevator() Elevator {
 		doorOpenDuration_s: 3.0,
 		obstruction:        false, // Default door open duration
 	}
+
+	return elevator_setup
 }
 
 // Function to set the obstruction status of the elevator
 func SetObsructionStatus(status bool) {
 	elevator.obstruction = status
+}
+
+func SetElevatorToValidStartPossition() {
+	fmt.Println("Elevator initialized")
+	for {
+		if elevio.GetFloor() == -1 {
+			elevio.SetMotorDirection(elevio.MD_Down)
+		} else {
+			elevio.SetMotorDirection(elevio.MD_Stop)
+			break
+		}
+		time.Sleep(_pollRate)
+
+	}
 }

@@ -1,3 +1,7 @@
 1) Jeg tror det skjer noe gærent når Fsm_onDoorTimeout kjørers og endrer elevator.drin og behavior. 
 Hvis de settes til f.eks. Up og moving så treffer den Case EB_Moving og Gjør ingen ting.
 Den går da videre i koden men motorene settes aldri i gang så den står bare stille og er stuck.
+        LØØØØØØST
+
+
+

@@ -45,6 +45,9 @@ func main() {
 	//}
 	inputPollRateMs := 25
 	prev_floor := -1
+
+	fsm.SetElevatorToValidStartPossition()
+
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction

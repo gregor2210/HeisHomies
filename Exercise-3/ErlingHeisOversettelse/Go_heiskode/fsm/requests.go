@@ -93,11 +93,12 @@ func requests_shouldStop(e Elevator) bool {
 		return true
 	}
 }
+
 // Denne funksjonen sjekker om heisen er i en etasje og om det er en knapp som er trykket inn i den etasjen. Dersom det er det, vil den returnere true.
 func requests_shouldClearImmediately(e Elevator, btn_floor int, btn_type elevio.ButtonType) bool {
 	return e.floor == btn_floor &&
-		((e.dirn == D_Up && btn_type == elevio.BT_HallUp) || 		
-			(e.dirn == D_Down && btn_type == elevio.BT_HallDown) || 
+		((e.dirn == D_Up && btn_type == elevio.BT_HallUp) ||
+			(e.dirn == D_Down && btn_type == elevio.BT_HallDown) ||
 			e.dirn == D_Stop ||
 			btn_type == elevio.BT_Cab)
 }
