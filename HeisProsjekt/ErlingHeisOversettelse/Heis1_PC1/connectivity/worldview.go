@@ -15,8 +15,7 @@ const (
 	UDP_world_view_send_ip   = "127.0.0.1"
 
 	// World view receiving UDP connection setup
-	UDP_world_view_receive_port = 8070
-	UDP_world_view_receive_ip   = "127.0.0.1"
+
 )
 
 var (
@@ -24,9 +23,11 @@ var (
 	addr_sending_world_view *net.UDPAddr
 	conn_sending_world_view *net.UDPConn
 
-	// World view receiving UDP connection setup
-	addr_receiving_world_view *net.UDPAddr
-	conn_receiving_world_view *net.UDPConn
+	// World view receiving UDP connection setup. Multiple ports and IPs can be added
+	UDP_world_view_receive_port = []int{8070}
+	UDP_world_view_receive_ip   = []string{"127.0.0.1"}
+	//addr_receiving_world_view *net.UDPAddr
+	conn_receiving_world_view []*net.UDPConn
 )
 
 // // World view sending UDP connection setup
@@ -44,15 +45,17 @@ func init() { // runs when imported
 	}
 
 	// World view receiving UDP connection setup
-	addr_receiving_world_view = &net.UDPAddr{
-		IP:   net.ParseIP(UDP_world_view_receive_ip),
-		Port: UDP_world_view_receive_port,
-	}
+	for i := 0; i < len(UDP_world_view_receive_port); i++ {
+		addr := &net.UDPAddr{
+			IP:   net.ParseIP(UDP_world_view_receive_ip[i]),
+			Port: UDP_world_view_receive_port[i],
+		}
 
-	fmt.Println("ListenUDP")
-	conn_receiving_world_view, err = net.ListenUDP("udp", addr_receiving_world_view)
-	if err != nil {
-		log.Fatalf("Failed to initialize world view receive UDP connection: %v", err)
+		conn, err := net.ListenUDP("udp", addr)
+		if err != nil {
+			log.Fatalf("Failed to initialize world view receive UDP connection: %v", err)
+		}
+		conn_receiving_world_view = append(conn_receiving_world_view, conn)
 	}
 
 }
@@ -69,7 +72,13 @@ func Send_elevator_world_view() {
 
 }
 
-func Receive_elevator_world_view(world_view_resever_chan chan string) {
+func Receive_elevator_world_view_distributor(world_view_resever_chan chan string) {
+	for i := 0; i < len(conn_receiving_world_view); i++ {
+		go Receive_elevator_world_view(world_view_resever_chan, conn_receiving_world_view[i])
+	}
+}
+
+func Receive_elevator_world_view(world_view_resever_chan chan string, conn_receiving_world_view *net.UDPConn) {
 	buffer := make([]byte, 1024)
 
 	for {

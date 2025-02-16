@@ -48,7 +48,7 @@ func main() {
 
 	// Channel to receive world view
 	world_view_resever_chan := make(chan string) // WORLD VIEW IS ONLY A STRING TEMPORALRY
-	go connectivity.Receive_elevator_world_view(world_view_resever_chan)
+	go connectivity.Receive_elevator_world_view_distributor(world_view_resever_chan)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
