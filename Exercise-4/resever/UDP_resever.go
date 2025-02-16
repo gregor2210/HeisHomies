@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-
+	time.Sleep(20 * time.Second)
 	buffer := make([]byte, 1024)
 	fmt.Println("Client is running at ")
 	for {
