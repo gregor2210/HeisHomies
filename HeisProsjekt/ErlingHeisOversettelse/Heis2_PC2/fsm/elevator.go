@@ -47,32 +47,43 @@ const (
 // is used to keep track of the elevators state
 // is basicly a elevator object
 type Elevator struct {
-	floor     int
-	dirn      Dirn
-	behaviour ElevatorBehaviour
+	ID        int
+	Floor     int
+	Dirn      Dirn
+	Behaviour ElevatorBehaviour
 	//Buttons in hall and cab x=floor y=button
-	requests           [4][3]bool
-	doorOpenDuration_s float64
-	obstruction        bool
+	Requests           [4][3]bool
+	DoorOpenDuration_s float64
+	Obstruction        bool
 }
 
 // Elevator initializer function
 func NewElevator() Elevator {
 	var elevator_setup Elevator = Elevator{
-		floor:              -1,           // Uninitialized floor
-		dirn:               D_Stop,       // Not moving
-		behaviour:          EB_Idle,      // Idle state
-		requests:           [4][3]bool{}, // No requests initially
-		doorOpenDuration_s: 3.0,
-		obstruction:        false, // Default door open duration
+		ID:                 2,
+		Floor:              -1,           // Uninitialized floor
+		Dirn:               D_Stop,       // Not moving
+		Behaviour:          EB_Idle,      // Idle state
+		Requests:           [4][3]bool{}, // No requests initially
+		DoorOpenDuration_s: 3.0,
+		Obstruction:        false, // Default door open duration
 	}
 
 	return elevator_setup
 }
 
+func PrintElevator(elevator Elevator) {
+	fmt.Printf("\n\nElevator:\n")
+	fmt.Printf("Floor: %d\n", elevator.Floor)
+	fmt.Printf("Direction: %v\n", elevator.Dirn)
+	fmt.Printf("Behaviour: %v\n", elevator.Behaviour)
+	fmt.Printf("Requests: %v\n", elevator.Requests)
+	fmt.Printf("Obstruction: %v\n", elevator.Obstruction)
+}
+
 // Function to set the obstruction status of the elevator
 func SetObsructionStatus(status bool) {
-	elevator.obstruction = status
+	elevator.Obstruction = status
 }
 
 func SetElevatorToValidStartPossition() {

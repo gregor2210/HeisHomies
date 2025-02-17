@@ -47,8 +47,8 @@ func main() {
 	world_view_send_ticker = ticker.C
 
 	// Channel to receive world view
-	world_view_resever_chan := make(chan string) // WORLD VIEW IS ONLY A STRING TEMPORALRY
-	go connectivity.Receive_elevator_world_view(world_view_resever_chan)
+	world_view_resever_chan := make(chan fsm.Elevator) // WORLD VIEW IS ONLY A STRING TEMPORALRY
+	go connectivity.Receive_elevator_world_view_distributor(world_view_resever_chan)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -93,10 +93,10 @@ func main() {
 		//fmt.Printf("%+v\n", a)
 
 		case world_view := <-world_view_resever_chan:
-			fmt.Println("World view reseved:", world_view)
+			fmt.Println("World view reseved:")
+			fsm.PrintElevator(world_view)
 
 		case <-world_view_send_ticker:
-
 			connectivity.Send_elevator_world_view()
 		}
 

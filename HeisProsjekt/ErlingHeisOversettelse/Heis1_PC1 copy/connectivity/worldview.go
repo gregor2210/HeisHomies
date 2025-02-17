@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"syscall"
 	"time"
 )
 
@@ -15,7 +14,7 @@ const (
 	// Timeout for receiving UDP messages
 	TIMEOUT = 3
 	// World view sending UDP connection setup
-	UDP_world_view_send_port = 8070
+	UDP_world_view_send_port = 8080
 	UDP_world_view_send_ip   = "127.0.0.1"
 
 	// World view receiving UDP connection setup
@@ -28,8 +27,8 @@ var (
 	conn_sending_world_view *net.UDPConn
 
 	// World view receiving UDP connection setup. Multiple ports and IPs can be added
-	UDP_world_view_receive_port = []int{8080, 8060}
-	UDP_world_view_receive_ip   = []string{"127.0.0.1", "127.0.0.1"}
+	UDP_world_view_receive_port = []int{8070}
+	UDP_world_view_receive_ip   = []string{"127.0.0.1"}
 	//addr_receiving_world_view *net.UDPAddr
 	conn_receiving_world_view []*net.UDPConn
 )
@@ -58,17 +57,6 @@ func init() { // runs when imported
 		conn, err := net.ListenUDP("udp", addr)
 		if err != nil {
 			log.Fatalf("Failed to initialize world view receive UDP connection: %v", err)
-		}
-
-		file, err := conn.File()
-		if err != nil {
-			log.Fatalf("failed to get file descriptor: %v", err)
-		}
-		defer file.Close()
-
-		err = syscall.SetsockoptInt(int(file.Fd()), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-		if err != nil {
-			log.Fatalf("failed to set SO_REUSEADDR: %v", err)
 		}
 		conn_receiving_world_view = append(conn_receiving_world_view, conn)
 	}
@@ -106,7 +94,7 @@ func Send_elevator_world_view() {
 	if err != nil {
 		fmt.Println("Failed to write", err)
 	} else {
-		fmt.Println("Sent world view from PC2")
+		fmt.Println("Sent world view from PC1")
 	}
 }
 

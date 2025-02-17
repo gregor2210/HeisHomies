@@ -15,7 +15,7 @@ const (
 	// Timeout for receiving UDP messages
 	TIMEOUT = 3
 	// World view sending UDP connection setup
-	UDP_world_view_send_port = 8070
+	UDP_world_view_send_port = 8060
 	UDP_world_view_send_ip   = "127.0.0.1"
 
 	// World view receiving UDP connection setup
@@ -28,7 +28,7 @@ var (
 	conn_sending_world_view *net.UDPConn
 
 	// World view receiving UDP connection setup. Multiple ports and IPs can be added
-	UDP_world_view_receive_port = []int{8080, 8060}
+	UDP_world_view_receive_port = []int{8070, 8080}
 	UDP_world_view_receive_ip   = []string{"127.0.0.1", "127.0.0.1"}
 	//addr_receiving_world_view *net.UDPAddr
 	conn_receiving_world_view []*net.UDPConn
@@ -106,7 +106,7 @@ func Send_elevator_world_view() {
 	if err != nil {
 		fmt.Println("Failed to write", err)
 	} else {
-		fmt.Println("Sent world view from PC2")
+		fmt.Println("Sent world view from PC3")
 	}
 }
 

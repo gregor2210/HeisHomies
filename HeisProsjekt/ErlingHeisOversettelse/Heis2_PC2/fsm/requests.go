@@ -10,9 +10,9 @@ type DirnBehaviourPair struct {
 }
 
 func requests_above(elevator Elevator) bool {
-	for i := elevator.floor + 1; i < NumFloors; i++ {
+	for i := elevator.Floor + 1; i < NumFloors; i++ {
 		for j := 0; j < NumButtons; j++ {
-			if elevator.requests[i][j] {
+			if elevator.Requests[i][j] {
 				return true
 			}
 		}
@@ -21,9 +21,9 @@ func requests_above(elevator Elevator) bool {
 }
 
 func requests_below(elevator Elevator) bool {
-	for i := 0; i < elevator.floor; i++ {
+	for i := 0; i < elevator.Floor; i++ {
 		for j := 0; j < NumButtons; j++ {
-			if elevator.requests[i][j] {
+			if elevator.Requests[i][j] {
 				return true
 			}
 		}
@@ -33,7 +33,7 @@ func requests_below(elevator Elevator) bool {
 
 func requests_here(elevator Elevator) bool {
 	for j := 0; j < NumButtons; j++ {
-		if elevator.requests[elevator.floor][j] {
+		if elevator.Requests[elevator.Floor][j] {
 			return true
 		}
 	}
@@ -41,7 +41,7 @@ func requests_here(elevator Elevator) bool {
 }
 
 func requests_chooseDirection(e Elevator) DirnBehaviourPair {
-	switch e.dirn {
+	switch e.Dirn {
 	case D_Up:
 		if requests_above(e) {
 			return DirnBehaviourPair{D_Up, EB_Moving}
@@ -78,14 +78,14 @@ func requests_chooseDirection(e Elevator) DirnBehaviourPair {
 }
 
 func requests_shouldStop(e Elevator) bool {
-	switch e.dirn {
+	switch e.Dirn {
 	case D_Down:
-		return e.requests[e.floor][elevio.BT_HallDown] ||
-			e.requests[e.floor][elevio.BT_Cab] ||
+		return e.Requests[e.Floor][elevio.BT_HallDown] ||
+			e.Requests[e.Floor][elevio.BT_Cab] ||
 			!requests_below(e)
 	case D_Up:
-		return e.requests[e.floor][elevio.BT_HallUp] ||
-			e.requests[e.floor][elevio.BT_Cab] ||
+		return e.Requests[e.Floor][elevio.BT_HallUp] ||
+			e.Requests[e.Floor][elevio.BT_Cab] ||
 			!requests_above(e)
 	case D_Stop:
 		fallthrough
@@ -96,33 +96,33 @@ func requests_shouldStop(e Elevator) bool {
 
 // Denne funksjonen sjekker om heisen er i en etasje og om det er en knapp som er trykket inn i den etasjen. Dersom det er det, vil den returnere true.
 func requests_shouldClearImmediately(e Elevator, btn_floor int, btn_type elevio.ButtonType) bool {
-	return e.floor == btn_floor &&
-		((e.dirn == D_Up && btn_type == elevio.BT_HallUp) ||
-			(e.dirn == D_Down && btn_type == elevio.BT_HallDown) ||
-			e.dirn == D_Stop ||
+	return e.Floor == btn_floor &&
+		((e.Dirn == D_Up && btn_type == elevio.BT_HallUp) ||
+			(e.Dirn == D_Down && btn_type == elevio.BT_HallDown) ||
+			e.Dirn == D_Stop ||
 			btn_type == elevio.BT_Cab)
 }
 
 func requests_clearAtCurrentFloor(e Elevator) Elevator {
-	e.requests[e.floor][elevio.BT_Cab] = false
-	switch e.dirn {
+	e.Requests[e.Floor][elevio.BT_Cab] = false
+	switch e.Dirn {
 	case D_Up:
-		if !requests_above(e) && !e.requests[e.floor][elevio.BT_HallUp] {
-			e.requests[e.floor][elevio.BT_HallDown] = false
+		if !requests_above(e) && !e.Requests[e.Floor][elevio.BT_HallUp] {
+			e.Requests[e.Floor][elevio.BT_HallDown] = false
 		}
-		e.requests[e.floor][elevio.BT_HallUp] = false
+		e.Requests[e.Floor][elevio.BT_HallUp] = false
 	case D_Down:
-		if !requests_below(e) && !e.requests[e.floor][elevio.BT_HallDown] {
-			e.requests[e.floor][elevio.BT_HallUp] = false
+		if !requests_below(e) && !e.Requests[e.Floor][elevio.BT_HallDown] {
+			e.Requests[e.Floor][elevio.BT_HallUp] = false
 		}
-		e.requests[e.floor][elevio.BT_HallDown] = false
+		e.Requests[e.Floor][elevio.BT_HallDown] = false
 
 	case D_Stop:
 		fallthrough
 
 	default:
-		e.requests[e.floor][elevio.BT_HallUp] = false
-		e.requests[e.floor][elevio.BT_HallDown] = false
+		e.Requests[e.Floor][elevio.BT_HallUp] = false
+		e.Requests[e.Floor][elevio.BT_HallDown] = false
 	}
 	return e
 }
