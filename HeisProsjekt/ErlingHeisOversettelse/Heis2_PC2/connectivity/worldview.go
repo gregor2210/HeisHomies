@@ -28,8 +28,8 @@ var (
 	conn_sending_world_view *net.UDPConn
 
 	// World view receiving UDP connection setup. Multiple ports and IPs can be added
-	UDP_world_view_receive_port = []int{8080, 8060}
-	UDP_world_view_receive_ip   = []string{"127.0.0.1", "127.0.0.1"}
+	UDP_world_view_receive_port = []int{8080}
+	UDP_world_view_receive_ip   = []string{"127.0.0.1"}
 	//addr_receiving_world_view *net.UDPAddr
 	conn_receiving_world_view []*net.UDPConn
 )
@@ -64,7 +64,7 @@ func init() { // runs when imported
 		if err != nil {
 			log.Fatalf("failed to get file descriptor: %v", err)
 		}
-		defer file.Close()
+		//defer file.Close()
 
 		err = syscall.SetsockoptInt(int(file.Fd()), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
 		if err != nil {
@@ -72,7 +72,6 @@ func init() { // runs when imported
 		}
 		conn_receiving_world_view = append(conn_receiving_world_view, conn)
 	}
-
 }
 
 //
