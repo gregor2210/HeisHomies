@@ -1,0 +1,2 @@
+1) Nå er world view kun en str som sendes. Men world view skal være all data i heisstructen. 
+-> Endre str til et format som endten kan ta en struct eller sende en formatert tråd.

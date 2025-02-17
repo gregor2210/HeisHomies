@@ -21,6 +21,7 @@ func master(lastCount int, addr *net.UDPAddr) {
 	//cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "go run Both.go")
 	cmd := exec.Command("gnome-terminal", "--", "go", "run", "Both.go")
 
+	time.Sleep(2 * time.Second)
 	// Start the new process
 	err := cmd.Start()
 	if err != nil {
