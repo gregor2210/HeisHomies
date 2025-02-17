@@ -16,6 +16,7 @@ const (
 func primary(startValue int) {
 	send_UDP_addr, err := net.ResolveUDPAddr("udp", snd_addr)    // Lager sendeadrese for UDP
 	if err != nil {
+
 		fmt.Println("Error: ", err)
 		return
 	}
@@ -39,6 +40,7 @@ func primary(startValue int) {
 		_, err = conn.Write([]byte(fmt.Sprintf("%d", count)))    // Sender melding til server
 		
 		if err != nil {
+			fmt.Println("write failed: ")
 			fmt.Println("Error: ", err)
 			return
 		}

@@ -57,6 +57,7 @@ func backup(countChan chan int) {
 }
 
 
+
 func primary(startValue int) {
 	send_UDP_addr, err := net.ResolveUDPAddr("udp", snd_addr)    // Lager sendeadrese for UDP
 	if err != nil {
@@ -97,7 +98,7 @@ func primary(startValue int) {
 
 
 func main() {
-
+	go primary(0)
 	countChan := make(chan int) // Kjører backup i hovedtråden
 
 	go backup(countChan)

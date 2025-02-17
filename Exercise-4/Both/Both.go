@@ -18,8 +18,8 @@ func send_udp_message(conn *net.UDPConn, message string) {
 }
 
 func master(lastCount int, addr *net.UDPAddr) {
-	cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "go run Both.go")
-	//cmd := exec.Command("gnome-terminal", "--", "go", "run", "main.go")
+	//cmd := exec.Command("cmd", "/C", "start", "cmd", "/K", "go run Both.go")
+	cmd := exec.Command("gnome-terminal", "--", "go", "run", "Both.go")
 
 	// Start the new process
 	err := cmd.Start()
