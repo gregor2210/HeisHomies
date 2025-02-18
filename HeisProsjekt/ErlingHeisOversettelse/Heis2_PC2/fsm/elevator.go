@@ -60,7 +60,7 @@ type Elevator struct {
 // Elevator initializer function
 func NewElevator() Elevator {
 	var elevator_setup Elevator = Elevator{
-		ID:                 2,
+		ID:                 1,
 		Floor:              -1,           // Uninitialized floor
 		Dirn:               D_Stop,       // Not moving
 		Behaviour:          EB_Idle,      // Idle state
@@ -74,6 +74,7 @@ func NewElevator() Elevator {
 
 func PrintElevator(elevator Elevator) {
 	fmt.Printf("\n\nElevator:\n")
+	fmt.Printf("ID: %d\n", elevator.ID)
 	fmt.Printf("Floor: %d\n", elevator.Floor)
 	fmt.Printf("Direction: %v\n", elevator.Dirn)
 	fmt.Printf("Behaviour: %v\n", elevator.Behaviour)

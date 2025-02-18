@@ -3,12 +3,15 @@ package connectivity
 import (
 	"Driver-go/fsm"
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 	"log"
 	"net"
 	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -28,7 +31,7 @@ var (
 	conn_sending_world_view *net.UDPConn
 
 	// World view receiving UDP connection setup. Multiple ports and IPs can be added
-	UDP_world_view_receive_port = []int{8070, 8080}
+	UDP_world_view_receive_port = []int{8080, 8070}
 	UDP_world_view_receive_ip   = []string{"127.0.0.1", "127.0.0.1"}
 	//addr_receiving_world_view *net.UDPAddr
 	conn_receiving_world_view []*net.UDPConn
@@ -55,22 +58,29 @@ func init() { // runs when imported
 			Port: UDP_world_view_receive_port[i],
 		}
 
-		conn, err := net.ListenUDP("udp", addr)
+		// Vi måtte åpne resuadder os sol socket før listen
+		lc := net.ListenConfig{
+			Control: func(network, address string, c syscall.RawConn) error {
+				return c.Control(func(fd uintptr) {
+					err := unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
+					if err != nil {
+						log.Fatalf("SO_REUSEADDR failed: %v", err)
+					}
+
+					err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
+					if err != nil {
+						log.Fatalf("SO_REUSEPORT failed: %v", err)
+					}
+				})
+			},
+		}
+
+		conn, err := lc.ListenPacket(context.Background(), "udp", addr.String())
 		if err != nil {
 			log.Fatalf("Failed to initialize world view receive UDP connection: %v", err)
 		}
 
-		file, err := conn.File()
-		if err != nil {
-			log.Fatalf("failed to get file descriptor: %v", err)
-		}
-		defer file.Close()
-
-		err = syscall.SetsockoptInt(int(file.Fd()), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-		if err != nil {
-			log.Fatalf("failed to set SO_REUSEADDR: %v", err)
-		}
-		conn_receiving_world_view = append(conn_receiving_world_view, conn)
+		conn_receiving_world_view = append(conn_receiving_world_view, conn.(*net.UDPConn))
 	}
 
 }
