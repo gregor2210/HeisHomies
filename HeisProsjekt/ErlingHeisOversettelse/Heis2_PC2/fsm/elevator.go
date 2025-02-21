@@ -60,7 +60,7 @@ type Elevator struct {
 // Elevator initializer function
 func NewElevator() Elevator {
 	var elevator_setup Elevator = Elevator{
-		ID:                 1,
+		ID:                 0,
 		Floor:              -1,           // Uninitialized floor
 		Dirn:               D_Stop,       // Not moving
 		Behaviour:          EB_Idle,      // Idle state

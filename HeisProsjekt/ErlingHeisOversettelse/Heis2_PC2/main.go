@@ -47,7 +47,7 @@ func main() {
 	world_view_send_ticker = ticker.C
 
 	// Channel to receive world view
-	world_view_resever_chan := make(chan fsm.Elevator) // WORLD VIEW IS ONLY A STRING TEMPORALRY
+	world_view_resever_chan := make(chan connectivity.Worldview_package) // WORLD VIEW IS ONLY A STRING TEMPORALRY
 	go connectivity.Receive_elevator_world_view_distributor(world_view_resever_chan)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -93,11 +93,13 @@ func main() {
 		//fmt.Printf("%+v\n", a)
 
 		case world_view := <-world_view_resever_chan:
-			fmt.Println("World view reseved:")
-			fsm.PrintElevator(world_view)
+			fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
+
+			//fsm.PrintElevator(world_view)
 
 		case <-world_view_send_ticker:
 			connectivity.Send_elevator_world_view()
+			connectivity.PrintIsOnline()
 		}
 
 		time.Sleep(500 * time.Duration(inputPollRateMs))
