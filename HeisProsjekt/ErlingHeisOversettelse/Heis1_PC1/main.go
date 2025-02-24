@@ -42,7 +42,7 @@ func main() {
 
 	// Go routine to send world view every second
 	var world_view_send_ticker <-chan time.Time
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
 	world_view_send_ticker = ticker.C
 
@@ -59,10 +59,23 @@ func main() {
 
 	fsm.SetElevatorToValidStartPossition()
 
+	var master bool = false
+
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
 		case a := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
+			if master {
+
+			} else {
+				// Chech is button is in request buttons
+
+				//Update butten request matrix
+				//Send World view to master
+				//Wait for master to send back the updated world view
+
+			}
+
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
 			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
@@ -94,6 +107,17 @@ func main() {
 
 		case world_view := <-world_view_resever_chan:
 			fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
+
+			if master {
+				// Decide what to do with reseved information
+				// Make disition
+				// update the world view
+
+			} else {
+
+				//Update the world view
+				//If gotten a new order from master, -> fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
+			}
 
 			//fsm.PrintElevator(world_view)
 

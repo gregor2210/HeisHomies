@@ -178,7 +178,7 @@ func Receive_elevator_world_view(world_view_resever_chan chan Worldview_package,
 				// Usikker på om denne skjer dersom ting blir corrupt på vein
 			}
 
-			time.Sleep(500 * time.Millisecond)
+			//time.Sleep(500 * time.Millisecond)
 			continue
 		}
 		//fmt.Println(n)

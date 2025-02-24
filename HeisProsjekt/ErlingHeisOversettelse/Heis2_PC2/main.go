@@ -42,7 +42,7 @@ func main() {
 
 	// Go routine to send world view every second
 	var world_view_send_ticker <-chan time.Time
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
 	world_view_send_ticker = ticker.C
 
