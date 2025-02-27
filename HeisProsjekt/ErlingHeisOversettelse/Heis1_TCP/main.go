@@ -40,18 +40,20 @@ func main() {
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+	//connectivity.TCP_setup()
+	TCP_receive_channel := make(chan connectivity.Worldview_package)
+	TCP_send_channel_listen := make(chan connectivity.Worldview_package)
+	TCP_send_channel_dail := make(chan connectivity.Worldview_package)
+	go connectivity.TCP_receving_setup(TCP_receive_channel, TCP_send_channel_listen, TCP_send_channel_dail)
+
 	// Go routine to send world view every second
 	var world_view_send_ticker <-chan time.Time
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(1000 * time.Millisecond)
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
 	world_view_send_ticker = ticker.C
 
-	// Channel to receive world view
-	world_view_resever_chan := make(chan connectivity.Worldview_package) // WORLD VIEW IS ONLY A STRING TEMPORALRY
-	go connectivity.Receive_elevator_world_view_distributor(world_view_resever_chan)
-
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+	time.Sleep(2000 * time.Millisecond)
 	fmt.Println("Started!")
 
 	inputPollRateMs := 25
@@ -59,23 +61,10 @@ func main() {
 
 	fsm.SetElevatorToValidStartPossition()
 
-	var master bool = false
-
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
 		case a := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
-			if master {
-
-			} else {
-				// Chech is button is in request buttons
-
-				//Update butten request matrix
-				//Send World view to master
-				//Wait for master to send back the updated world view
-
-			}
-
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
 			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
@@ -100,33 +89,19 @@ func main() {
 			fsm.SetObsructionStatus(a)
 			fsm.TimerStart(3)
 
-		//fmt.Printf("%+v\n", a)
-
-		//case a := <-drv_stop:
-		//fmt.Printf("%+v\n", a)
-
-		case world_view := <-world_view_resever_chan:
-			fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
-
-			if master {
-				// Decide what to do with reseved information
-				// Make disition
-				// update the world view
-
-			} else {
-
-				//Update the world view
-				//If gotten a new order from master, -> fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
-			}
-
-			//fsm.PrintElevator(world_view)
-
 		case <-world_view_send_ticker:
-			connectivity.Send_elevator_world_view()
-			connectivity.PrintIsOnline()
-		}
+			//fmt.Println("Sending world view")
+			connectivity.Send_world_view()
+			//connectivity.PrintIsOnline()
 
-		time.Sleep(500 * time.Duration(inputPollRateMs))
+			//case world_view := <-TCP_receive_channel:
+			//fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
+			//fmt.Println("\n\n")
+			time.Sleep(500 * time.Duration(inputPollRateMs))
+
+		case recived_world_view := <-TCP_receive_channel:
+			fmt.Println("World view reseved, PC:", recived_world_view.Elevator_ID)
+		}
 
 	}
 
