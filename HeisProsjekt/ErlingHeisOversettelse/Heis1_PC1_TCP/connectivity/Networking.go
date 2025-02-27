@@ -5,9 +5,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"log"
 	"net"
-	"os"
 	"time"
 )
 
@@ -23,66 +21,25 @@ const (
 )
 
 var (
+	// What ID will given id listen to and dial to
+	TCP_listen_IDs []int
+	TCP_dial_IDs   []int
+
 	// World view sending UDP connection setup
-	// Elevator (0-1, 1-2, 0-2), first is dialing, second is receiving
+	// Elevator (0-1, 1-2, 2-1), first is dialing, second is listening
 	TCP_world_view_send_ips = []string{"localhost:8080", "localhost:8070", "localhost:8060"}
-	TCP_listen_conns        = [3]*net.Conn{}
+	TCP_listen_conns        = [3]net.Conn{}
 
 	other_elevatorID_order []int
 )
 
-func listenTCPForElevatos(ip string, i int) {
-	// Start listening on a TCP port
-	listener, err := net.Listen("tcp", TCP_world_view_send_ips[0])
-	if err != nil {
-		fmt.Println("Error starting server:", err)
-		os.Exit(1)
-	}
-	defer listener.Close()
-	fmt.Println("Server is listening on localhost:8080")
-
-	// Accept a connection
-	conn, err := listener.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection:", err)
-	} else {
-		fmt.Println("Connected to client on ip:", ip)
-	}
-
-	// Store a pointer to the connection in TCP_listen_conns
-	TCP_listen_conns[i] = &conn // Store pointer to net.Conn
-}
-
-func dialTCPForElevatos(ip string, i int) {
-	// Connect to the TCP server
-	conn, err := net.Dial("tcp", ip)
-	if err != nil {
-		fmt.Println("Error connecting:", err)
-		return
-	}
-
-	fmt.Println("Connected to the server.")
-
-	// Store a pointer to the connection in TCP_listen_conns
-	TCP_listen_conns[i] = &conn // Store pointer to net.Conn
-}
-
-// // World view sending UDP connection setup
+// // World view sending TCP connection setup
 func init() { // runs when imported
-	var err error
+	//ALLE SKAL LISTENE PÅ SIN IP MEN DAILTE DE ANDRES!!!
 
-	if ID == 0 {
-		go listenTCPForElevatos(TCP_world_view_send_ips[0], 0)
-		go listenTCPForElevatos(TCP_world_view_send_ips[2], 2)
-		go dialTCPForElevatos(TCP_world_view_send_ips[1], 1)
+}
 
-	} else if ID == 1 {
-		go listenTCPForElevatos(TCP_world_view_send_ips[1], 1)
-	} else if ID == 2 {
-
-	} else {
-		log.Fatalf("Invalid ID: %d", ID)
-	}
+func SetupTCPListen() {
 
 }
 
