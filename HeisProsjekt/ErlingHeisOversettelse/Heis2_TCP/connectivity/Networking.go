@@ -3,6 +3,7 @@ package connectivity
 import (
 	"Driver-go/fsm"
 	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	"log"
@@ -91,23 +92,25 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package, TCP_send_cha
 	for {
 		// Cheching if tcp is setup, if not, setup
 		if !server_trying_to_setup && !IsOnline(TCP_connected_e_ID) {
+			fmt.Println("Starting up TCP_server_setup")
 			go TCP_server_setup()
 		}
 		if !client_trying_to_setup && !IsOnline(TCP_e_we_connect_to_ID) {
+			fmt.Println("Starting up TCP_client_setup")
 			go TCP_client_setup()
 		}
 
 		if IsOnline(TCP_connected_e_ID) && !server_resiever_running {
-			fmt.Println("Starting receiving from connected elevator")
+			fmt.Println("Starting handle_receive for connected elevator")
 			go handle_receive(server_conn, TCP_receive_channel, TCP_connected_e_ID, "server")
 		} else {
-			fmt.Println("No resceving started. No elevator is connected to this elevator")
+			//fmt.Println("No resceving started. No elevator is connected to this elevator")
 		}
 		if IsOnline(TCP_e_we_connect_to_ID) && !client_resiever_running {
-			fmt.Println("Starting receiving from elevator we are connected to")
+			fmt.Println("Starting rhandle_receive for elevator we are connected to")
 			go handle_receive(client_conn, TCP_receive_channel, TCP_e_we_connect_to_ID, "client")
 		} else {
-			fmt.Println("No resceving started. This elevator is not connected to any other elevator")
+			//fmt.Println("No resceving started. This elevator is not connected to any other elevator")
 		}
 
 		time.Sleep(2 * time.Second)
@@ -186,6 +189,18 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			}
 			return
 		}
+		var packetLength uint32
+		err = binary.Read(conn, binary.BigEndian, &packetLength)
+		if err != nil {
+			fmt.Println("failed to read packetLength:", err)
+			if conn_type == "server" {
+				server_resiever_running = false
+			} else {
+				client_resiever_running = false
+			}
+			return
+		}
+
 		_, err = conn.Read(buffer)
 		if err != nil {
 			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
@@ -194,11 +209,10 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 				server_resiever_running = false
 			} else {
 				client_resiever_running = false
-				//conn.Close()
 			}
 			return
 		}
-		fmt.Printf("DATA MOTATT!")
+		fmt.Printf("DATA MOTATT! ")
 
 		// Remove padding before deserializing
 		//trimmedData := bytes.TrimRight(buffer, "\x00")
@@ -231,7 +245,18 @@ func Send_world_view() {
 	//paddedData := make([]byte, PACKAGE_SIZE)
 	//copy(paddedData, serialized_world_view_package)
 
+	//Finding package length
+	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
+
 	if IsOnline(TCP_connected_e_ID) {
+		//sending first packetLength, before actual packet. Preventing packet stacking
+		err = binary.Write(server_conn, binary.BigEndian, packetLength)
+		if err != nil {
+			fmt.Println("Error sending packetlength to connected elevator, connection lost.")
+			SetElevatorOffline(TCP_connected_e_ID) //setting status of connected elevator to offline
+		}
+
+		//writing acctual package
 		_, err = server_conn.Write(serialized_world_view_package)
 		if err != nil {
 			fmt.Println("Error sending, connection lost.")
@@ -239,6 +264,14 @@ func Send_world_view() {
 		}
 	}
 	if IsOnline(TCP_e_we_connect_to_ID) {
+		//sending first packetLength, before actual packet. Preventing packet stacking
+		err = binary.Write(client_conn, binary.BigEndian, packetLength)
+		if err != nil {
+			fmt.Println("Error sending packetlength to connected elevator, connection lost.")
+			SetElevatorOffline(TCP_e_we_connect_to_ID) //setting status of connected elevator to offline
+		}
+
+		//writing acctual package
 		_, err = client_conn.Write(serialized_world_view_package)
 		if err != nil {
 			fmt.Println("Error sending, connection lost.")

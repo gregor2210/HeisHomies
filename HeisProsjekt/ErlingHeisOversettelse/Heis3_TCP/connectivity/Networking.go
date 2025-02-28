@@ -14,7 +14,7 @@ import (
 const (
 	//Device ID, to make it use right ports and ip. For easyer development
 	//starts at 0
-	ID = 0
+	ID = 2
 	// Timeout for receiving UDP messages
 	TIMEOUT = 5
 
