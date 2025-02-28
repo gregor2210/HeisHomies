@@ -1,4 +1,4 @@
-package connectivity
+package masterSlave
 
 import (
 	"Driver-go/fsm"

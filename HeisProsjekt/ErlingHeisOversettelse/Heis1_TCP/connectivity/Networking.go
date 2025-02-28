@@ -2,6 +2,7 @@ package connectivity
 
 import (
 	"Driver-go/fsm"
+	"Driver-go/masterSlave"
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
@@ -72,22 +73,22 @@ func init() { // runs when imported
 }
 
 // Serialize the struct
-func SerializeElevator(wv Worldview_package) ([]byte, error) {
+func SerializeElevator(wv masterSlave.Worldview_package) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(wv)
 	return buf.Bytes(), err
 }
 
-func DeserializeElevator(data []byte) (Worldview_package, error) {
-	var wv Worldview_package
+func DeserializeElevator(data []byte) (masterSlave.Worldview_package, error) {
+	var wv masterSlave.Worldview_package
 	buf := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&wv)
 	return wv, err
 }
 
-func TCP_receving_setup(TCP_receive_channel chan Worldview_package, TCP_send_channel_listen chan Worldview_package, TCP_send_channel_dail chan Worldview_package) {
+func TCP_receving_setup(TCP_receive_channel chan masterSlave.Worldview_package, TCP_send_channel_listen chan masterSlave.Worldview_package, TCP_send_channel_dail chan masterSlave.Worldview_package) {
 	fmt.Println("Starting TCP receving setup")
 	for {
 		// Cheching if tcp is setup, if not, setup
@@ -165,7 +166,7 @@ func TCP_client_setup() {
 	client_trying_to_setup = false
 }
 
-func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, ID_of_connected_elevator int, conn_type string) {
+func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldview_package, ID_of_connected_elevator int, conn_type string) {
 	defer conn.Close()
 	if conn_type == "server" {
 		server_resiever_running = true
@@ -231,7 +232,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 }
 
 func Send_world_view() {
-	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
+	send_world_view_package := masterSlave.New_Worldview_package(ID, fsm.GetElevatorStruct())
 	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
 	if err != nil {
 		log.Fatal("failed to serialize:", err)

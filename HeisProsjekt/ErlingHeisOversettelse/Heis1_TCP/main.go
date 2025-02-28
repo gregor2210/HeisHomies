@@ -4,6 +4,7 @@ import (
 	"Driver-go/connectivity"
 	"Driver-go/elevio"
 	"Driver-go/fsm"
+	"Driver-go/masterSlave"
 	"fmt"
 	"time"
 )
@@ -41,9 +42,9 @@ func main() {
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	//connectivity.TCP_setup()
-	TCP_receive_channel := make(chan connectivity.Worldview_package)
-	TCP_send_channel_listen := make(chan connectivity.Worldview_package)
-	TCP_send_channel_dail := make(chan connectivity.Worldview_package)
+	TCP_receive_channel := make(chan masterSlave.Worldview_package)
+	TCP_send_channel_listen := make(chan masterSlave.Worldview_package)
+	TCP_send_channel_dail := make(chan masterSlave.Worldview_package)
 	go connectivity.TCP_receving_setup(TCP_receive_channel, TCP_send_channel_listen, TCP_send_channel_dail)
 
 	// Go routine to send world view every second
