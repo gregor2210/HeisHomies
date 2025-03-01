@@ -6,16 +6,18 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"flag"
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
 const (
 	//Device ID, to make it use right ports and ip. For easyer development
 	//starts at 0
-	ID = 0
+	Nr_of_elevators = 3
 	// Timeout for receiving UDP messages
 	TIMEOUT = 5
 
@@ -24,22 +26,20 @@ const (
 )
 
 var (
+	ID = 1
+
 	// What ID will given id listen to and dial to
-	TCP_listen_ID          = ID
-	TCP_e_we_connect_to_ID int
-	TCP_connected_e_ID     int
+	//row listens to column. column dailer til row
+	TCP_world_view_send_ips_matrix [Nr_of_elevators - 1][Nr_of_elevators]string
+	listen_dail_conn_matrix        [Nr_of_elevators - 1][Nr_of_elevators]net.Conn
+	trying_to_setup_matrix         = [Nr_of_elevators - 1][Nr_of_elevators]bool{}
+	rescever_running_matrix        = [Nr_of_elevators - 1][Nr_of_elevators]bool{}
 
-	server_ip string
-	client_ip string
-
-	server_conn net.Conn
-	client_conn net.Conn
-
-	server_trying_to_setup bool = false
-	client_trying_to_setup bool = false
-
-	server_resiever_running bool = false
-	client_resiever_running bool = false
+	// Mutex for the matrixes
+	mu_world_view_send_ips_matrix sync.Mutex
+	mu_listen_dail_conn_matrix    sync.Mutex
+	mu_trying_to_setup_matrix     sync.Mutex
+	mu_rescever_running_matrix    sync.Mutex
 
 	// World view sending UDP connection setup
 	// Elevator (0-1, 1-2, 2-1), first is dialing, second is listening
@@ -49,27 +49,64 @@ var (
 
 // // World view sending TCP connection setup
 func init() { // runs when imported
-	//ALLE SKAL LISTENE PÅ SIN IP MEN DAILTE DE ANDRES!!!
-	if ID == 0 {
-		TCP_e_we_connect_to_ID = 2
-		TCP_connected_e_ID = 1
-	} else if ID == 1 {
-		TCP_e_we_connect_to_ID = 0
-		TCP_connected_e_ID = 2
-	} else if ID == 2 {
-		TCP_e_we_connect_to_ID = 1
-		TCP_connected_e_ID = 0
-	} else {
-		fmt.Println("Invalid ID")
+
+	flag.IntVar(&ID, "id", ID, "Spesefy the id with -id")
+	flag.Parse()
+
+	for i := 0; i < Nr_of_elevators-1; i++ {
+		for j := i + 1; j < Nr_of_elevators; j++ {
+			ip := "localhost:80" + fmt.Sprint(i) + fmt.Sprint(j)
+			set_TCP_world_view_send_ips_matrix(i, j, ip)
+		}
 	}
-	server_ip = TCP_world_view_send_ips[TCP_listen_ID]
-	client_ip = TCP_world_view_send_ips[TCP_connected_e_ID]
+}
 
-	// Start server, listening for incoming connections
-	go TCP_server_setup()
+func get_TCP_world_view_send_ips_matrix(i int, j int) string {
+	mu_world_view_send_ips_matrix.Lock()
+	defer mu_world_view_send_ips_matrix.Unlock()
+	return TCP_world_view_send_ips_matrix[i][j]
+}
 
-	// Start client, dialing to other elevator
-	go TCP_client_setup()
+func set_TCP_world_view_send_ips_matrix(i int, j int, ip string) {
+	mu_world_view_send_ips_matrix.Lock()
+	TCP_world_view_send_ips_matrix[i][j] = ip
+	mu_world_view_send_ips_matrix.Unlock()
+}
+
+func get_listen_dail_conn_matrix(i int, j int) net.Conn {
+	mu_listen_dail_conn_matrix.Lock()
+	defer mu_listen_dail_conn_matrix.Unlock()
+	return listen_dail_conn_matrix[i][j]
+}
+
+func set_listen_dail_conn_matrix(i int, j int, conn net.Conn) {
+	mu_listen_dail_conn_matrix.Lock()
+	listen_dail_conn_matrix[i][j] = conn
+	mu_listen_dail_conn_matrix.Unlock()
+}
+
+func get_trying_to_setup_matrix(i int, j int) bool {
+	mu_trying_to_setup_matrix.Lock()
+	defer mu_trying_to_setup_matrix.Unlock()
+	return trying_to_setup_matrix[i][j]
+}
+
+func set_trying_to_setup_matrix(i int, j int, b bool) {
+	mu_trying_to_setup_matrix.Lock()
+	trying_to_setup_matrix[i][j] = b
+	mu_trying_to_setup_matrix.Unlock()
+}
+
+func get_rescever_running_matrix(i int, j int) bool {
+	mu_rescever_running_matrix.Lock()
+	defer mu_rescever_running_matrix.Unlock()
+	return rescever_running_matrix[i][j]
+}
+
+func set_rescever_running_matrix(i int, j int, b bool) {
+	mu_rescever_running_matrix.Lock()
+	rescever_running_matrix[i][j] = b
+	mu_rescever_running_matrix.Unlock()
 }
 
 // Serialize the struct
@@ -88,91 +125,102 @@ func DeserializeElevator(data []byte) (masterSlave.Worldview_package, error) {
 	return wv, err
 }
 
-func TCP_receving_setup(TCP_receive_channel chan masterSlave.Worldview_package, TCP_send_channel_listen chan masterSlave.Worldview_package, TCP_send_channel_dail chan masterSlave.Worldview_package) {
+func TCP_receving_setup(TCP_receive_channel chan masterSlave.Worldview_package) {
 	fmt.Println("Starting TCP receving setup")
-	for {
-		// Cheching if tcp is setup, if not, setup
-		if !server_trying_to_setup && !IsOnline(TCP_connected_e_ID) {
-			fmt.Println("Starting up TCP_server_setup")
-			go TCP_server_setup()
-		}
-		if !client_trying_to_setup && !IsOnline(TCP_e_we_connect_to_ID) {
-			fmt.Println("Starting up TCP_client_setup")
-			go TCP_client_setup()
+	for { //for loop to keep the function running
+		//Server setup
+		for j := ID + 1; j < Nr_of_elevators; j++ {
+			//Server_conn_setup
+			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) {
+				fmt.Println("Starting up TCP_server_setup. ", ID, "listening for: ", j)
+				go TCP_server_setup(j)
+			}
+
+			//Server rescever setup
+			if IsOnline(j) && !get_rescever_running_matrix(ID, j) {
+				fmt.Println("Starting handle_receive for connected elevator")
+				go handle_receive(get_listen_dail_conn_matrix(ID, j), TCP_receive_channel, j, ID, j)
+			}
 		}
 
-		if IsOnline(TCP_connected_e_ID) && !server_resiever_running {
-			fmt.Println("Starting handle_receive for connected elevator")
-			go handle_receive(server_conn, TCP_receive_channel, TCP_connected_e_ID, "server")
-		} else {
-			//fmt.Println("No resceving started. No elevator is connected to this elevator")
-		}
-		if IsOnline(TCP_e_we_connect_to_ID) && !client_resiever_running {
-			fmt.Println("Starting rhandle_receive for elevator we are connected to")
-			go handle_receive(client_conn, TCP_receive_channel, TCP_e_we_connect_to_ID, "client")
-		} else {
-			//fmt.Println("No resceving started. This elevator is not connected to any other elevator")
-		}
+		//Client setup
+		for i := 0; i < ID; i++ {
+			//Client_conn_setup
+			if !get_trying_to_setup_matrix(i, ID) && !IsOnline(i) {
+				fmt.Println("Starting up TCP_client_setup. ", ID, "dialing to: ", i)
+				go TCP_client_setup(i)
+			}
 
+			//Client rescever setup
+			if IsOnline(i) && !get_rescever_running_matrix(i, ID) {
+				fmt.Println("Starting handle_receive for elevator we are connected to")
+				go handle_receive(get_listen_dail_conn_matrix(i, ID), TCP_receive_channel, i, i, ID)
+			}
+
+		}
 		time.Sleep(2 * time.Second)
+
 	}
 
 }
 
-func TCP_server_setup() {
-	// Listen to all incoming messages
-	//fmt.Println("Starting server")
-	server_trying_to_setup = true
+func TCP_server_setup(incoming_e_ID int) {
+	//Setting up serfor for ID to listen to incoming_e_ID
+	set_trying_to_setup_matrix(ID, incoming_e_ID, true)
+
+	server_ip := get_TCP_world_view_send_ips_matrix(ID, incoming_e_ID)
 
 	fmt.Println("Server listening on ip: ", server_ip)
 	ln, err := net.Listen("tcp", server_ip)
 	if err != nil {
-		fmt.Println("Error in TCP_server_setup")
-		fmt.Println(err)
+		fmt.Println("Error in TCP_server_setup", server_ip, err)
 	}
 
-	fmt.Println("Waiting for Accept")
+	fmt.Println("Waiting for Accept:", server_ip)
 	conn, err := ln.Accept()
 	if err != nil {
-		fmt.Println("Error in TCP_server_setup")
-		fmt.Println(err)
+		fmt.Println("Error in TCP_server_setup:", server_ip, err)
 	}
-	fmt.Println("Setting elevator " + fmt.Sprint(TCP_connected_e_ID) + " online. GOT ACCEPTED")
 
-	server_conn = conn
-	SetElevatorOnline(TCP_connected_e_ID)
-	server_trying_to_setup = false
-	ln.Close()
+	fmt.Println("Elevator ", incoming_e_ID, " connected to elevator ", ID, ". Setting ", incoming_e_ID, " to online")
+
+	set_listen_dail_conn_matrix(ID, incoming_e_ID, conn)
+
+	SetElevatorOnline(incoming_e_ID)
+
+	set_trying_to_setup_matrix(ID, incoming_e_ID, false)
+
+	defer ln.Close()
 }
 
-func TCP_client_setup() {
-	client_trying_to_setup = true
+func TCP_client_setup(e_dailing_to_ID int) {
+	set_trying_to_setup_matrix(e_dailing_to_ID, ID, true)
+
+	client_ip := get_TCP_world_view_send_ips_matrix(e_dailing_to_ID, ID)
+
 	for {
 		fmt.Printf("Trying to dail to ip: %s\n", client_ip)
 		conn, err := net.Dial("tcp", client_ip)
 		if err != nil {
-			fmt.Println("Connection failed, retrying in 2 seconds...")
+			fmt.Println("Dailing id ", e_dailing_to_ID, "failed, retrying in 2 seconds...")
 			time.Sleep(2 * time.Second)
 			continue
 		}
 
 		fmt.Println("Connected to", client_ip)
 
-		client_conn = conn
-		SetElevatorOnline(TCP_e_we_connect_to_ID) //setting status of connected elevator to online
+		set_listen_dail_conn_matrix(e_dailing_to_ID, ID, conn)
+
+		SetElevatorOnline(e_dailing_to_ID) //setting status of connected elevator to online
 
 		break
 	}
-	client_trying_to_setup = false
+	set_trying_to_setup_matrix(e_dailing_to_ID, ID, false)
 }
 
-func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldview_package, ID_of_connected_elevator int, conn_type string) {
+func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldview_package, ID_of_connected_elevator int, i int, j int) {
 	defer conn.Close()
-	if conn_type == "server" {
-		server_resiever_running = true
-	} else {
-		client_resiever_running = true
-	}
+	set_rescever_running_matrix(i, j, true)
 
 	fmt.Println("HANDLE RECEIVE STARTED, ID: " + fmt.Sprint(ID_of_connected_elevator))
 	for {
@@ -182,23 +230,14 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldvie
 		err := conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
 		if err != nil {
 			fmt.Println("Conn not open")
-
-			if conn_type == "server" {
-				server_resiever_running = false
-			} else {
-				client_resiever_running = false
-			}
+			set_rescever_running_matrix(i, j, false)
 			return
 		}
 		var packetLength uint32
 		err = binary.Read(conn, binary.BigEndian, &packetLength)
 		if err != nil {
 			fmt.Println("failed to read packetLength:", err)
-			if conn_type == "server" {
-				server_resiever_running = false
-			} else {
-				client_resiever_running = false
-			}
+			set_rescever_running_matrix(i, j, false)
 			return
 		}
 
@@ -206,11 +245,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldvie
 		if err != nil {
 			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
 			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
-			if conn_type == "server" {
-				server_resiever_running = false
-			} else {
-				client_resiever_running = false
-			}
+			set_rescever_running_matrix(i, j, false)
 			return
 		}
 		fmt.Printf("DATA MOTATT! ")
@@ -249,34 +284,42 @@ func Send_world_view() {
 	//Finding package length
 	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
 
-	if IsOnline(TCP_connected_e_ID) {
-		//sending first packetLength, before actual packet. Preventing packet stacking
-		err = binary.Write(server_conn, binary.BigEndian, packetLength)
-		if err != nil {
-			fmt.Println("Error sending packetlength to connected elevator, connection lost.")
-			SetElevatorOffline(TCP_connected_e_ID) //setting status of connected elevator to offline
-		}
+	// Sending to all online that are connected to us
+	for connected_e_ID := ID + 1; connected_e_ID < Nr_of_elevators; connected_e_ID++ {
+		if IsOnline(connected_e_ID) {
 
-		//writing acctual package
-		_, err = server_conn.Write(serialized_world_view_package)
-		if err != nil {
-			fmt.Println("Error sending, connection lost.")
-			SetElevatorOffline(TCP_connected_e_ID) //setting status of connected elevator to offline
+			//sending first packetLength, before actual packet. Preventing packet stacking
+			server_conn := get_listen_dail_conn_matrix(ID, connected_e_ID)
+			err = binary.Write(server_conn, binary.BigEndian, packetLength)
+			if err != nil {
+				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
+				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+			}
+
+			//writing acctual package
+			_, err = server_conn.Write(serialized_world_view_package)
+			if err != nil {
+				fmt.Println("Error sending, connection lost.")
+				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+			}
 		}
 	}
-	if IsOnline(TCP_e_we_connect_to_ID) {
-		//sending first packetLength, before actual packet. Preventing packet stacking
-		err = binary.Write(client_conn, binary.BigEndian, packetLength)
-		if err != nil {
-			fmt.Println("Error sending packetlength to connected elevator, connection lost.")
-			SetElevatorOffline(TCP_e_we_connect_to_ID) //setting status of connected elevator to offline
-		}
+	for connected_e_ID := 0; connected_e_ID < ID; connected_e_ID++ {
+		if IsOnline(connected_e_ID) {
+			//sending first packetLength, before actual packet. Preventing packet stacking
+			client_conn := get_listen_dail_conn_matrix(connected_e_ID, ID)
+			err = binary.Write(client_conn, binary.BigEndian, packetLength)
+			if err != nil {
+				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
+				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+			}
 
-		//writing acctual package
-		_, err = client_conn.Write(serialized_world_view_package)
-		if err != nil {
-			fmt.Println("Error sending, connection lost.")
-			SetElevatorOffline(TCP_e_we_connect_to_ID) //setting status of connected elevator to offline
+			//writing acctual package
+			_, err = client_conn.Write(serialized_world_view_package)
+			if err != nil {
+				fmt.Println("Error sending, connection lost.")
+				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+			}
 		}
 	}
 }

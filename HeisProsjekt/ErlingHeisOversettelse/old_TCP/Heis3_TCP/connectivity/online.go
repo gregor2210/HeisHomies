@@ -12,7 +12,7 @@ var (
 	// The index of the list is the elevator ID
 	// The value is true if the elevator is online, false if it is offline
 	// Online or offline is based on if we receve message from it or not
-	isOnline = [Nr_of_elevators]bool{}
+	isOnline = []bool{false, false, false}
 )
 
 func init() {
