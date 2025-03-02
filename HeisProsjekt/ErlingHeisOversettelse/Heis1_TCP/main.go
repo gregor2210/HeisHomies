@@ -4,21 +4,43 @@ import (
 	"Driver-go/connectivity"
 	"Driver-go/elevio"
 	"Driver-go/fsm"
-	"Driver-go/masterSlave"
 	"fmt"
 	"time"
 )
 
+const (
+	NumFloors       = 4
+	Port_server_id0 = 15657
+)
+
 func main() {
-	numFloors := 4
-	port := 15657
-	port = port + connectivity.ID
+
+	port := Port_server_id0 + connectivity.ID
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
-	elevio.Init(ip, numFloors)
+	elevio.Init(ip, NumFloors)
 
 	//var d elevio.MotorDirection = elevio.MD_Up
 	//elevio.SetMotorDirection(d)
+
+	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//connectivity.TCP_setup()
+
+	TCP_receive_channel := make(chan connectivity.Worldview_package)
+	//TCP_send_channel_listen := make(chan connectivity.Worldview_package)
+	//TCP_send_channel_dail := make(chan connectivity.Worldview_package)
+	go connectivity.TCP_receving_setup(TCP_receive_channel)
+
+	// Go routine to send world view every second
+	var world_view_send_ticker <-chan time.Time
+	ticker := time.NewTicker(1000 * time.Millisecond)
+	defer ticker.Stop() // Ensure the ticker stops when the program exits
+	world_view_send_ticker = ticker.C
+
+	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//Master Slave setup
+
+	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
@@ -43,19 +65,6 @@ func main() {
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-	//connectivity.TCP_setup()
-	TCP_receive_channel := make(chan masterSlave.Worldview_package)
-	//TCP_send_channel_listen := make(chan masterSlave.Worldview_package)
-	//TCP_send_channel_dail := make(chan masterSlave.Worldview_package)
-	go connectivity.TCP_receving_setup(TCP_receive_channel)
-
-	// Go routine to send world view every second
-	var world_view_send_ticker <-chan time.Time
-	ticker := time.NewTicker(1000 * time.Millisecond)
-	defer ticker.Stop() // Ensure the ticker stops when the program exits
-	world_view_send_ticker = ticker.C
-
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	time.Sleep(2000 * time.Millisecond)
 	fmt.Println("Started!")
 

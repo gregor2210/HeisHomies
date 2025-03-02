@@ -12,7 +12,7 @@ var (
 	// The index of the list is the elevator ID
 	// The value is true if the elevator is online, false if it is offline
 	// Online or offline is based on if we receve message from it or not
-	isOnline = [Nr_of_elevators]bool{}
+	isOnline = [NR_OF_ELEVATORS]bool{}
 )
 
 func init() {
@@ -70,4 +70,16 @@ func PrintIsOnline() {
 		}
 		log.Printf("Elevator %d is %s\n", i, status)
 	}
+}
+
+func Self_only_online() bool {
+	for i := 0; i < NR_OF_ELEVATORS; i++ {
+		if i != ID {
+			if isOnline[i] {
+				return false
+			}
+		}
+	}
+	//Self is only online
+	return true
 }

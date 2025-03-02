@@ -2,11 +2,9 @@ package connectivity
 
 import (
 	"Driver-go/fsm"
-	"Driver-go/masterSlave"
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -17,7 +15,7 @@ import (
 const (
 	//Device ID, to make it use right ports and ip. For easyer development
 	//starts at 0
-	Nr_of_elevators = 3
+
 	// Timeout for receiving UDP messages
 	TIMEOUT = 5
 
@@ -26,14 +24,16 @@ const (
 )
 
 var (
-	ID = 1
 
 	// What ID will given id listen to and dial to
 	//row listens to column. column dailer til row
-	TCP_world_view_send_ips_matrix [Nr_of_elevators - 1][Nr_of_elevators]string
-	listen_dail_conn_matrix        [Nr_of_elevators - 1][Nr_of_elevators]net.Conn
-	trying_to_setup_matrix         = [Nr_of_elevators - 1][Nr_of_elevators]bool{}
-	rescever_running_matrix        = [Nr_of_elevators - 1][Nr_of_elevators]bool{}
+
+	TCP_world_view_send_ips_matrix [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]string
+	listen_dail_conn_matrix        [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]net.Conn
+	trying_to_setup_matrix         = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
+	rescever_running_matrix        = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
+
+	//these are gonna look like the matrixes above
 
 	// Mutex for the matrixes
 	mu_world_view_send_ips_matrix sync.Mutex
@@ -43,18 +43,16 @@ var (
 
 	// World view sending UDP connection setup
 	// Elevator (0-1, 1-2, 2-1), first is dialing, second is listening
-	TCP_world_view_send_ips = []string{"localhost:8080", "localhost:8070", "localhost:8060"}
-	TCP_listen_conns        = [3]net.Conn{}
 )
 
 // // World view sending TCP connection setup
 func init() { // runs when imported
 
-	flag.IntVar(&ID, "id", ID, "Spesefy the id with -id")
-	flag.Parse()
+	//flag.IntVar(&ID, "id", ID, "Spesefy the id with -id")
+	//flag.Parse()
 
-	for i := 0; i < Nr_of_elevators-1; i++ {
-		for j := i + 1; j < Nr_of_elevators; j++ {
+	for i := 0; i < NR_OF_ELEVATORS-1; i++ {
+		for j := i + 1; j < NR_OF_ELEVATORS; j++ {
 			ip := "localhost:80" + fmt.Sprint(i) + fmt.Sprint(j)
 			set_TCP_world_view_send_ips_matrix(i, j, ip)
 		}
@@ -69,8 +67,8 @@ func get_TCP_world_view_send_ips_matrix(i int, j int) string {
 
 func set_TCP_world_view_send_ips_matrix(i int, j int, ip string) {
 	mu_world_view_send_ips_matrix.Lock()
+	defer mu_world_view_send_ips_matrix.Unlock()
 	TCP_world_view_send_ips_matrix[i][j] = ip
-	mu_world_view_send_ips_matrix.Unlock()
 }
 
 func get_listen_dail_conn_matrix(i int, j int) net.Conn {
@@ -81,8 +79,8 @@ func get_listen_dail_conn_matrix(i int, j int) net.Conn {
 
 func set_listen_dail_conn_matrix(i int, j int, conn net.Conn) {
 	mu_listen_dail_conn_matrix.Lock()
+	defer mu_listen_dail_conn_matrix.Unlock()
 	listen_dail_conn_matrix[i][j] = conn
-	mu_listen_dail_conn_matrix.Unlock()
 }
 
 func get_trying_to_setup_matrix(i int, j int) bool {
@@ -93,8 +91,8 @@ func get_trying_to_setup_matrix(i int, j int) bool {
 
 func set_trying_to_setup_matrix(i int, j int, b bool) {
 	mu_trying_to_setup_matrix.Lock()
+	defer mu_trying_to_setup_matrix.Unlock()
 	trying_to_setup_matrix[i][j] = b
-	mu_trying_to_setup_matrix.Unlock()
 }
 
 func get_rescever_running_matrix(i int, j int) bool {
@@ -105,31 +103,31 @@ func get_rescever_running_matrix(i int, j int) bool {
 
 func set_rescever_running_matrix(i int, j int, b bool) {
 	mu_rescever_running_matrix.Lock()
+	defer mu_rescever_running_matrix.Unlock()
 	rescever_running_matrix[i][j] = b
-	mu_rescever_running_matrix.Unlock()
 }
 
 // Serialize the struct
-func SerializeElevator(wv masterSlave.Worldview_package) ([]byte, error) {
+func SerializeElevator(wv Worldview_package) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(wv)
 	return buf.Bytes(), err
 }
 
-func DeserializeElevator(data []byte) (masterSlave.Worldview_package, error) {
-	var wv masterSlave.Worldview_package
+func DeserializeElevator(data []byte) (Worldview_package, error) {
+	var wv Worldview_package
 	buf := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buf)
 	err := dec.Decode(&wv)
 	return wv, err
 }
 
-func TCP_receving_setup(TCP_receive_channel chan masterSlave.Worldview_package) {
+func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 	fmt.Println("Starting TCP receving setup")
 	for { //for loop to keep the function running
 		//Server setup
-		for j := ID + 1; j < Nr_of_elevators; j++ {
+		for j := ID + 1; j < NR_OF_ELEVATORS; j++ {
 			//Server_conn_setup
 			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) {
 				fmt.Println("Starting up TCP_server_setup. ", ID, "listening for: ", j)
@@ -218,7 +216,7 @@ func TCP_client_setup(e_dailing_to_ID int) {
 	set_trying_to_setup_matrix(e_dailing_to_ID, ID, false)
 }
 
-func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldview_package, ID_of_connected_elevator int, i int, j int) {
+func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, ID_of_connected_elevator int, i int, j int) {
 	defer conn.Close()
 	set_rescever_running_matrix(i, j, true)
 
@@ -267,7 +265,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan masterSlave.Worldvie
 }
 
 func Send_world_view() {
-	send_world_view_package := masterSlave.New_Worldview_package(ID, fsm.GetElevatorStruct())
+	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
 	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
 	if err != nil {
 		log.Fatal("failed to serialize:", err)
@@ -285,7 +283,7 @@ func Send_world_view() {
 	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
 
 	// Sending to all online that are connected to us
-	for connected_e_ID := ID + 1; connected_e_ID < Nr_of_elevators; connected_e_ID++ {
+	for connected_e_ID := ID + 1; connected_e_ID < NR_OF_ELEVATORS; connected_e_ID++ {
 		if IsOnline(connected_e_ID) {
 
 			//sending first packetLength, before actual packet. Preventing packet stacking

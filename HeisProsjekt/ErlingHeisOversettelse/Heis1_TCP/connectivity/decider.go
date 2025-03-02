@@ -1,18 +1,34 @@
-package masterSlave
+package connectivity
 
 type decisionType int
 
 const (
 	Primary decisionType = 1
 	Backup  decisionType = -1
-	Unknown decisionType = 0
+	Alone   decisionType = 0
 )
 
 var (
-	decisionState = [3]decisionType{Unknown, Unknown, Unknown}
+	decisionState [NR_OF_ELEVATORS]decisionType //arreay of length NR_OF_ELEVATORS, deafult values Alone
 )
 
+func init() {
+	// Initialize all elements to Alone (0) using a loop
+	for i := range decisionState {
+		decisionState[i] = Alone
+	}
+}
+
 func SetDecisionState() {
+	//Check is this elevator is connected to anyuthing
+	if Self_only_online() {
+		decisionState[ID] = Alone
+	}
+
+	//Check if connected to a master,
+
+	//Check if connected to a slave
+
 	// Plan
 	// If PC0 is online, it starts as the primary
 	// If PC0 is offline, PC1 will be the primary.
