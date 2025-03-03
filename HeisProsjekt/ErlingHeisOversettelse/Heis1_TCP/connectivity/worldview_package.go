@@ -12,6 +12,7 @@ var (
 
 type Worldview_package struct {
 	Elevator_ID      int
+	Time_stamps      int
 	cyclic_counter   int
 	Elevator         fsm.Elevator //refrence
 	NewButtonRequest [4][2]int

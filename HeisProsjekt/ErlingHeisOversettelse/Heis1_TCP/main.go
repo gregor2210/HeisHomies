@@ -79,7 +79,12 @@ func main() {
 		case a := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
-			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
+
+			if connectivity.Get_decision_type(connectivity.ID) == connectivity.Alone {
+				fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
+			} else if connectivity.Get_decision_type(connectivity.ID) == connectivity.Master {
+				//do master
+			}
 
 		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
 			fmt.Println("Floor event")

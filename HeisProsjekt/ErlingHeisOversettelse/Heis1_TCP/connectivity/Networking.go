@@ -1,5 +1,6 @@
 package connectivity
 
+//https://pkg.go.dev/net#KeepAliveConfig
 import (
 	"Driver-go/fsm"
 	"bytes"
@@ -180,6 +181,8 @@ func TCP_server_setup(incoming_e_ID int) {
 		fmt.Println("Error in TCP_server_setup:", server_ip, err)
 	}
 
+	//Set no delay til true
+
 	fmt.Println("Elevator ", incoming_e_ID, " connected to elevator ", ID, ". Setting ", incoming_e_ID, " to online")
 
 	set_listen_dail_conn_matrix(ID, incoming_e_ID, conn)
@@ -223,7 +226,6 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 	fmt.Println("HANDLE RECEIVE STARTED, ID: " + fmt.Sprint(ID_of_connected_elevator))
 	for {
 		// Replace with actual receiving logic
-		buffer := make([]byte, 1024)
 
 		err := conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
 		if err != nil {
@@ -238,7 +240,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			set_rescever_running_matrix(i, j, false)
 			return
 		}
-
+		buffer := make([]byte, packetLength)
 		_, err = conn.Read(buffer)
 		if err != nil {
 			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
@@ -246,7 +248,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			set_rescever_running_matrix(i, j, false)
 			return
 		}
-		fmt.Printf("DATA MOTATT! ")
+		fmt.Println("DATA MOTATT! ")
 
 		// Remove padding before deserializing
 		//trimmedData := bytes.TrimRight(buffer, "\x00")
@@ -258,6 +260,9 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		if err != nil {
 			log.Fatal("failed to deserialize:", err)
 		}
+
+		//Store backup worldview from incomming elevator
+		Store_worldview(receved_world_view_package.Elevator_ID, receved_world_view_package)
 
 		TCP_receive_channel <- receved_world_view_package
 	}

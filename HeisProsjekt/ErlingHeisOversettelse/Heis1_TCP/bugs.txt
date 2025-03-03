@@ -6,5 +6,4 @@ VI kan bare fortsette uten å ta log.Fatal men da må vi legge inn en error hond
 
 2) Ved mye packetloss så begynner TCP og bruke lenger tid på å retrye hvis den feiler flere ganger på rad. Ved høyt pakketap står den på DAIL veldig lenge.
 
-3) FAKKKK KODEN ER IKKE SCALEBLE
 

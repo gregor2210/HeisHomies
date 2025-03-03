@@ -3,7 +3,7 @@ package connectivity
 import "flag"
 
 const (
-	NR_OF_ELEVATORS = 3
+	NR_OF_ELEVATORS = 4
 )
 
 var (
@@ -14,3 +14,4 @@ func init() {
 	flag.IntVar(&ID, "id", 0, "Specify the id with -id")
 	flag.Parse()
 }
+

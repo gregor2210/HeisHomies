@@ -1,34 +1,23 @@
 package connectivity
 
-import "log"
-
-var (
-	world_view_elv_1 Worldview_package
-	world_view_elv_2 Worldview_package
-	world_view_elv_3 Worldview_package
+import (
+	"sync"
 )
 
-func Store_worldview(ID int, worldview Worldview_package) {
-	switch ID {
-	case 1:
-		world_view_elv_1 = worldview
-	case 2:
-		world_view_elv_2 = worldview
-	case 3:
-		world_view_elv_3 = worldview
-	}
+var (
+	world_view_backup       [NR_OF_ELEVATORS]Worldview_package
+	world_view_backup_mutex sync.Mutex
+)
+
+func Store_worldview(id int, worldview Worldview_package) {
+	world_view_backup_mutex.Lock()
+	defer world_view_backup_mutex.Unlock()
+	world_view_backup[id] = worldview
 
 }
 
-func Get_worldview(ID int) Worldview_package {
-	switch ID {
-	case 1:
-		return world_view_elv_1
-	case 2:
-		return world_view_elv_2
-	case 3:
-		return world_view_elv_3
-	}
-	log.Fatalf("Error Get_worldview: Invalid ID%v", ID)
-	return Worldview_package{}
+func Get_worldview(id int) Worldview_package {
+	world_view_backup_mutex.Lock()
+	defer world_view_backup_mutex.Unlock()
+	return world_view_backup[id]
 }

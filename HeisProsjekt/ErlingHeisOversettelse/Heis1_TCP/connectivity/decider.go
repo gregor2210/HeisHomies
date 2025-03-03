@@ -1,15 +1,18 @@
 package connectivity
 
+import "sync"
+
 type decisionType int
 
 const (
-	Primary decisionType = 1
-	Backup  decisionType = -1
-	Alone   decisionType = 0
+	Master decisionType = 1
+	Slave  decisionType = -1
+	Alone  decisionType = 0
 )
 
 var (
-	decisionState [NR_OF_ELEVATORS]decisionType //arreay of length NR_OF_ELEVATORS, deafult values Alone
+	decisionState       [NR_OF_ELEVATORS]decisionType //arreay of length NR_OF_ELEVATORS, deafult values Alone
+	decisionState_mutex sync.Mutex
 )
 
 func init() {
@@ -19,11 +22,21 @@ func init() {
 	}
 }
 
+func Get_decision_type(id int) decisionType {
+	decisionState_mutex.Lock()
+	defer decisionState_mutex.Unlock()
+	return decisionState[id]
+}
+
 func SetDecisionState() {
 	//Check is this elevator is connected to anyuthing
 	if Self_only_online() {
 		decisionState[ID] = Alone
+		//Skal den gjør noen andres oppgaver?
+		//- Sjekk hen andre 
 	}
+
+
 
 	//Check if connected to a master,
 
