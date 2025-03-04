@@ -80,10 +80,12 @@ func main() {
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
 
-			if connectivity.Get_decision_type(connectivity.ID) == connectivity.Alone {
+			if len(connectivity.Get_all_online_ids()) != 1 {
+				//Thill is start the prosses of finding the best elevator
+				connectivity.New_order(a.Floor, int(a.Button))
+			} else {
+				// If elevator do not see any other elevators are online. Do the request selfe
 				fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
-			} else if connectivity.Get_decision_type(connectivity.ID) == connectivity.Master {
-				//do master
 			}
 
 		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
@@ -116,8 +118,15 @@ func main() {
 			//fmt.Println("\n\n")
 			time.Sleep(500 * time.Duration(inputPollRateMs))
 
-		case recived_world_view := <-TCP_receive_channel:
-			fmt.Println("World view reseved, PC:", recived_world_view.Elevator_ID)
+		case received_world_view := <-TCP_receive_channel:
+			fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
+
+			if received_world_view.Order_bool {
+				fmt.Println("Order receved")
+				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
+			}
+
+			connectivity.Receved_order_requests(received_world_view.Order_requeset)
 		}
 
 	}

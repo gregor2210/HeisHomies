@@ -3,6 +3,7 @@ package connectivity
 import (
 	"fmt"
 	"log"
+	"sync"
 )
 
 // This file contains the status of which elevators are are online and ofline based on this elevators view
@@ -12,7 +13,8 @@ var (
 	// The index of the list is the elevator ID
 	// The value is true if the elevator is online, false if it is offline
 	// Online or offline is based on if we receve message from it or not
-	isOnline = [NR_OF_ELEVATORS]bool{}
+	isOnline       = [NR_OF_ELEVATORS]bool{}
+	isOnline_mutex sync.Mutex
 )
 
 func init() {
@@ -22,6 +24,8 @@ func init() {
 
 // AddElevatorOnline sets the elevator ID to online in the isOnline list
 func SetElevatorOnline(elevatorID int) {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 
 		// If is only to make the print only appare if there is a chainge in state
@@ -38,6 +42,8 @@ func SetElevatorOnline(elevatorID int) {
 
 // RemoveElevatorOnline sets the elevator ID to offline in the isOnline list
 func SetElevatorOffline(elevatorID int) {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 
 		// If is only to make the print only appare if there is a chainge in state
@@ -53,6 +59,8 @@ func SetElevatorOffline(elevatorID int) {
 
 // Return true if is online
 func IsOnline(elevatorID int) bool {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 		return isOnline[elevatorID]
 	}
@@ -63,6 +71,8 @@ func IsOnline(elevatorID int) bool {
 
 // PrintIsOnline prints the status of all elevators
 func PrintIsOnline() {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
 	for i, online := range isOnline {
 		status := "offline"
 		if online {
@@ -73,6 +83,8 @@ func PrintIsOnline() {
 }
 
 func Self_only_online() bool {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
 	for i := 0; i < NR_OF_ELEVATORS; i++ {
 		if i != ID {
 			if isOnline[i] {
@@ -82,4 +94,22 @@ func Self_only_online() bool {
 	}
 	//Self is only online
 	return true
+}
+
+func Get_all_online_ids() []int {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
+
+	var online_elevators []int
+	for i, online := range isOnline {
+		if online {
+			online_elevators = append(online_elevators, i)
+		}
+	}
+	return online_elevators
+}
+
+func get_lowest_online_id() int {
+	//returning the online elevator with lowest id
+	return Get_all_online_ids()[0]
 }

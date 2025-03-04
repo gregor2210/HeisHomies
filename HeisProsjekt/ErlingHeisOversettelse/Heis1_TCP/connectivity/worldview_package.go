@@ -1,50 +1,28 @@
 package connectivity
 
 import (
+	"Driver-go/elevio"
 	"Driver-go/fsm"
 	"fmt"
 )
 
-var (
-	cyclic_counter         = 0
-	newButtonRequestMatrix [4][2]int
-)
-
 type Worldview_package struct {
-	Elevator_ID      int
-	Time_stamps      int
-	cyclic_counter   int
-	Elevator         fsm.Elevator //refrence
-	NewButtonRequest [4][2]int
+	Elevator_ID    int
+	Elevator       fsm.Elevator //refrence
+	Order_requeset []OrderRequests
+	Order_response []OrderRequests
+	Order          elevio.ButtonEvent
+	Order_bool     bool
 }
 
 func New_Worldview_package(elevator_id int, elevator fsm.Elevator) Worldview_package {
 	return Worldview_package{
-		Elevator_ID:      elevator_id,
-		cyclic_counter:   cyclic_counter,
-		Elevator:         elevator,
-		NewButtonRequest: newButtonRequestMatrix,
+		Elevator_ID:    elevator_id,
+		Elevator:       elevator,
+		Order_requeset: Get_order_requests(),
+		Order_response: Get_order_respons(),
+		Order_bool:     false,
 	}
-}
-
-func Increment_cyclic_counter() {
-	cyclic_counter++
-}
-
-func Get_cyclic_counter() int {
-	return cyclic_counter
-}
-
-func Set_cyclic_counter(c int) {
-	cyclic_counter = c
-}
-
-func Get_newButtonRequestMatrix() [4][2]int {
-	return newButtonRequestMatrix
-}
-
-func Set_newButtonRequestMatrix(floor int, button int) {
-	newButtonRequestMatrix[floor][button] = 1
 }
 
 func PrintWorldview(world_view Worldview_package) {

@@ -2,6 +2,7 @@ package connectivity
 
 //https://pkg.go.dev/net#KeepAliveConfig
 import (
+	"Driver-go/elevio"
 	"Driver-go/fsm"
 	"bytes"
 	"encoding/binary"
@@ -325,4 +326,61 @@ func Send_world_view() {
 			}
 		}
 	}
+}
+
+func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
+	mu_listen_dail_conn_matrix.Lock()
+	defer mu_listen_dail_conn_matrix.Unlock()
+
+	//find correct conn
+	var conn net.Conn
+	if IsOnline(recever_e) {
+		if listen_dail_conn_matrix[ID][recever_e] != nil {
+			conn = listen_dail_conn_matrix[ID][recever_e]
+
+		} else if listen_dail_conn_matrix[recever_e][ID] != nil {
+			conn = listen_dail_conn_matrix[recever_e][ID]
+		} else {
+			fmt.Println("No valid conn to send ORDER")
+			return false
+		}
+	} else {
+		return false
+	}
+
+	//Try to send order to that conn
+	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
+	send_world_view_package.Order_bool = true
+	send_world_view_package.Order = order
+
+	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
+	if err != nil {
+		log.Fatal("failed to serialize:", err)
+	}
+
+	// Set the write deadline for both write operations (2 seconds)
+	err = conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
+	if err != nil {
+		fmt.Println("Failed to set write deadline:", err)
+		return false
+	}
+
+	//Finding package length
+	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
+
+	err = binary.Write(conn, binary.BigEndian, packetLength)
+	if err != nil {
+		fmt.Println("Error sending packetlength for ORDER to connected elevator, connection lost or timedout.")
+		return false
+	}
+
+	//writing acctual package
+	_, err = conn.Write(serialized_world_view_package)
+	if err != nil {
+		fmt.Println("Error sending ORDER, connection lost.  or timedout")
+		return false
+	}
+
+	//everyting worked!
+	return true
 }
