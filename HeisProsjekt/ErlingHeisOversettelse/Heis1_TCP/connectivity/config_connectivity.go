@@ -3,7 +3,12 @@ package connectivity
 import "flag"
 
 const (
-	NR_OF_ELEVATORS = 4
+	NR_OF_ELEVATORS = 3
+	// Timeout for receiving UDP messages
+	TIMEOUT = 3
+
+	// Worldview max package size
+	PACKAGE_SIZE = 1024
 )
 
 var (
@@ -14,4 +19,3 @@ func init() {
 	flag.IntVar(&ID, "id", 0, "Specify the id with -id")
 	flag.Parse()
 }
-

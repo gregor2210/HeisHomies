@@ -22,14 +22,28 @@ func init() {
 	isOnline[ID] = true
 }
 
+func get_isOnline() [NR_OF_ELEVATORS]bool {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
+	return isOnline
+}
+
+func set_isOnline(id int, state bool) {
+	isOnline_mutex.Lock()
+	defer isOnline_mutex.Unlock()
+	isOnline[id] = state
+}
+
 // AddElevatorOnline sets the elevator ID to online in the isOnline list
 func SetElevatorOnline(elevatorID int) {
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
-	if elevatorID >= 0 && elevatorID < len(isOnline) {
+
+	//If a valid id
+	if elevatorID >= 0 && elevatorID < NR_OF_ELEVATORS {
 
 		// If is only to make the print only appare if there is a chainge in state
-		if !IsOnline(elevatorID) {
+		if isOnline[elevatorID] {
 			fmt.Println("Setting ElevatorID:", elevatorID, "to ONLINE!")
 		}
 
@@ -47,7 +61,7 @@ func SetElevatorOffline(elevatorID int) {
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 
 		// If is only to make the print only appare if there is a chainge in state
-		if IsOnline(elevatorID) {
+		if isOnline[elevatorID] {
 			fmt.Println("Setting ElevatorID:", elevatorID, "to OFLINE!")
 		}
 

@@ -7,3 +7,28 @@ VI kan bare fortsette uten å ta log.Fatal men da må vi legge inn en error hond
 2) Ved mye packetloss så begynner TCP og bruke lenger tid på å retrye hvis den feiler flere ganger på rad. Ved høyt pakketap står den på DAIL veldig lenge.
 
 
+3) ---------------------------------------------------
+World view reseved, PC: 1
+Removing a old response
+World view reseved, PC: 0
+Generating new response
+---------------------------------------------------
+request floor:  3
+elevator floor:  2
+Delta floor:  1
+Priority value : 60
+Priority value: 50
+---------------------------------------------------
+World view reseved, PC: 1
+Removing a old response
+World view reseved, PC: 0
+Generating new response
+---------------------------------------------------
+request floor:  3
+elevator floor:  2
+Delta floor:  1
+Priority value : 60
+Priority value: 50
+
+Den tar å sletter en gammel response selv om den ikke er gammel. Må være noe tull i logikken på sletting..
+Tror jeg må printe Response matrisene for å se hvordan de ser ut..

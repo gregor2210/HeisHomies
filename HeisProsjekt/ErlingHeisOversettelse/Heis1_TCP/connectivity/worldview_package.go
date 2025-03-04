@@ -19,7 +19,7 @@ func New_Worldview_package(elevator_id int, elevator fsm.Elevator) Worldview_pac
 	return Worldview_package{
 		Elevator_ID:    elevator_id,
 		Elevator:       elevator,
-		Order_requeset: Get_order_requests(),
+		Order_requeset: Get_pending_orders(),
 		Order_response: Get_order_respons(),
 		Order_bool:     false,
 	}

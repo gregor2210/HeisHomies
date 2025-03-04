@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	NumFloors       = 4
+	NUMFLOORS       = 4
 	Port_server_id0 = 15657
 )
 
@@ -18,14 +18,14 @@ func main() {
 	port := Port_server_id0 + connectivity.ID
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
-	elevio.Init(ip, NumFloors)
+	elevio.Init(ip, NUMFLOORS)
 
 	//var d elevio.MotorDirection = elevio.MD_Up
 	//elevio.SetMotorDirection(d)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	//connectivity.TCP_setup()
 
+	//connectivity.TCP_setup()
 	TCP_receive_channel := make(chan connectivity.Worldview_package)
 	//TCP_send_channel_listen := make(chan connectivity.Worldview_package)
 	//TCP_send_channel_dail := make(chan connectivity.Worldview_package)
@@ -38,8 +38,9 @@ func main() {
 	world_view_send_ticker = ticker.C
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	//Master Slave setup
-
+	//Order setup
+	order_to_send_chan := make(chan connectivity.DoneProcessedOrder)
+	connectivity.Order_setup(order_to_send_chan)
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	drv_buttons := make(chan elevio.ButtonEvent)
@@ -68,7 +69,7 @@ func main() {
 	time.Sleep(2000 * time.Millisecond)
 	fmt.Println("Started!")
 
-	inputPollRateMs := 25
+	//inputPollRateMs := 25
 	prev_floor := -1
 
 	fsm.SetElevatorToValidStartPossition()
@@ -76,16 +77,19 @@ func main() {
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
-		case a := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
+		case button_event := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
 			fmt.Println("Button event-------------------------------------------------------------------------")
-			fmt.Printf("%+v\n", a)
+			fmt.Printf("%+v\n", button_event)
 
-			if len(connectivity.Get_all_online_ids()) != 1 {
-				//Thill is start the prosses of finding the best elevator
-				connectivity.New_order(a.Floor, int(a.Button))
+			if len(connectivity.Get_all_online_ids()) != 1 && button_event.Button != elevio.BT_Cab {
+				//This is start the prosses of finding the best elevator, only if there are other elevators online
+				//This will also not run if it is a cab request
+				priority_value := fsm.Calculate_priority_value(button_event)
+				connectivity.New_order(button_event.Floor, int(button_event.Button), priority_value)
 			} else {
 				// If elevator do not see any other elevators are online. Do the request selfe
-				fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
+				fmt.Println("No other online elevators or a cab call. Take order")
+				fsm.Fsm_onRequestButtonPress(button_event.Floor, button_event.Button)
 			}
 
 		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
@@ -116,7 +120,7 @@ func main() {
 			//case world_view := <-TCP_receive_channel:
 			//fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
 			//fmt.Println("\n\n")
-			time.Sleep(500 * time.Duration(inputPollRateMs))
+			//time.Sleep(500 * time.Duration(inputPollRateMs))
 
 		case received_world_view := <-TCP_receive_channel:
 			fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
@@ -126,7 +130,15 @@ func main() {
 				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
 			}
 
-			connectivity.Receved_order_requests(received_world_view.Order_requeset)
+			//priority_value := fsm.Calculate_priority_value(received_world_view.)
+			connectivity.Receved_order_requests(received_world_view.Order_requeset) //Mulig vi kan flytte denne inn i conneciton pakka
+			connectivity.Receved_order_response(received_world_view.Order_response)
+
+		case received_order := <-order_to_send_chan:
+			if !connectivity.SendOrderToSpesificElevator(received_order) {
+
+				fsm.Fsm_onRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
+			}
 		}
 
 	}

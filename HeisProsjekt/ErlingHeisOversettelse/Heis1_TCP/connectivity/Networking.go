@@ -15,14 +15,9 @@ import (
 )
 
 const (
-	//Device ID, to make it use right ports and ip. For easyer development
-	//starts at 0
+//Device ID, to make it use right ports and ip. For easyer development
+//starts at 0
 
-	// Timeout for receiving UDP messages
-	TIMEOUT = 5
-
-	// Worldview max package size
-	PACKAGE_SIZE = 1024
 )
 
 var (
@@ -249,7 +244,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			set_rescever_running_matrix(i, j, false)
 			return
 		}
-		fmt.Println("DATA MOTATT! ")
+		//fmt.Println("DATA MOTATT! ")
 
 		// Remove padding before deserializing
 		//trimmedData := bytes.TrimRight(buffer, "\x00")
@@ -305,6 +300,8 @@ func Send_world_view() {
 			if err != nil {
 				fmt.Println("Error sending, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+			} else {
+				//fmt.Println("Succes sending worldview")
 			}
 		}
 	}
@@ -329,17 +326,15 @@ func Send_world_view() {
 }
 
 func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
-	mu_listen_dail_conn_matrix.Lock()
-	defer mu_listen_dail_conn_matrix.Unlock()
-
 	//find correct conn
 	var conn net.Conn
 	if IsOnline(recever_e) {
-		if listen_dail_conn_matrix[ID][recever_e] != nil {
-			conn = listen_dail_conn_matrix[ID][recever_e]
 
-		} else if listen_dail_conn_matrix[recever_e][ID] != nil {
-			conn = listen_dail_conn_matrix[recever_e][ID]
+		if get_listen_dail_conn_matrix(ID, recever_e) != nil {
+			conn = get_listen_dail_conn_matrix(ID, recever_e)
+
+		} else if get_listen_dail_conn_matrix(recever_e, ID) != nil {
+			conn = get_listen_dail_conn_matrix(recever_e, ID)
 		} else {
 			fmt.Println("No valid conn to send ORDER")
 			return false
@@ -359,7 +354,7 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 	}
 
 	// Set the write deadline for both write operations (2 seconds)
-	err = conn.SetWriteDeadline(time.Now().Add(2 * time.Second))
+	err = conn.SetWriteDeadline(time.Now().Add(TIMEOUT * time.Second))
 	if err != nil {
 		fmt.Println("Failed to set write deadline:", err)
 		return false
@@ -373,6 +368,7 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 		fmt.Println("Error sending packetlength for ORDER to connected elevator, connection lost or timedout.")
 		return false
 	}
+	fmt.Println("Success sending ORDER packetlength")
 
 	//writing acctual package
 	_, err = conn.Write(serialized_world_view_package)
@@ -380,6 +376,9 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 		fmt.Println("Error sending ORDER, connection lost.  or timedout")
 		return false
 	}
+	//disable SetwriteDeadline
+	conn.SetWriteDeadline(time.Time{})
+	fmt.Println("Success sending ORDER")
 
 	//everyting worked!
 	return true
