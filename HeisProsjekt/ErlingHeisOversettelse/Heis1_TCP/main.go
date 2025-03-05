@@ -116,6 +116,11 @@ func main() {
 		case <-world_view_send_ticker:
 			//fmt.Println("Sending world view")
 			connectivity.Send_world_view()
+
+			send_world_view_package := connectivity.New_Worldview_package(connectivity.ID, fsm.GetElevatorStruct())
+			connectivity.PrintOrderRequest(send_world_view_package.Order_requeset)
+			connectivity.PrintOrderRequest(send_world_view_package.Order_response)
+
 			//connectivity.PrintIsOnline()
 
 			//case world_view := <-TCP_receive_channel:
@@ -124,7 +129,7 @@ func main() {
 			//time.Sleep(500 * time.Duration(inputPollRateMs))
 
 		case received_world_view := <-TCP_receive_channel:
-			fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
+			//fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
 
 			if received_world_view.Order_bool {
 				fmt.Println("Order receved")
@@ -133,12 +138,12 @@ func main() {
 
 			//priority_value := fsm.Calculate_priority_value(received_world_view.)
 			connectivity.Receved_order_requests(received_world_view.Order_requeset, received_world_view.Elevator_ID) //Mulig vi kan flytte denne inn i conneciton pakka
-			fmt.Println("Receved_order_response, id: ", received_world_view.Elevator_ID)
+			//fmt.Println("Receved_order_response, id: ", received_world_view.Elevator_ID)
 			connectivity.Receved_order_response(received_world_view.Order_response)
 
 		case received_order := <-order_to_send_chan:
 			if !connectivity.SendOrderToSpesificElevator(received_order) {
-
+				fmt.Println("Failed to send order. taking it selfe")
 				fsm.Fsm_onRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
 			}
 		}

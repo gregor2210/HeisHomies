@@ -326,32 +326,45 @@ func Send_world_view() {
 }
 
 func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
+	fmt.Println("Inside send order to spesific elevator!")
 	//find correct conn
 	var conn net.Conn
 	if IsOnline(recever_e) {
 
 		if get_listen_dail_conn_matrix(ID, recever_e) != nil {
 			conn = get_listen_dail_conn_matrix(ID, recever_e)
+			fmt.Println("Here1")
 
 		} else if get_listen_dail_conn_matrix(recever_e, ID) != nil {
 			conn = get_listen_dail_conn_matrix(recever_e, ID)
+			fmt.Println("Here2")
 		} else {
 			fmt.Println("No valid conn to send ORDER")
+			fmt.Println("Here3")
 			return false
 		}
 	} else {
+		fmt.Println("Here4")
 		return false
 	}
-
+	fmt.Println("Here5")
 	//Try to send order to that conn
+	a := fsm.GetElevatorStruct()
+	fmt.Println("After get elv struct")
+
+	_ = New_Worldview_package(ID, a)
+	fmt.Println("After get WV")
+
 	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
 	send_world_view_package.Order_bool = true
 	send_world_view_package.Order = order
 
+	fmt.Println("Here6")
 	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
 	if err != nil {
 		log.Fatal("failed to serialize:", err)
 	}
+	fmt.Println("Here7")
 
 	// Set the write deadline for both write operations (2 seconds)
 	err = conn.SetWriteDeadline(time.Now().Add(TIMEOUT * time.Second))
@@ -359,6 +372,7 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 		fmt.Println("Failed to set write deadline:", err)
 		return false
 	}
+	fmt.Println("Here8")
 
 	//Finding package length
 	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes

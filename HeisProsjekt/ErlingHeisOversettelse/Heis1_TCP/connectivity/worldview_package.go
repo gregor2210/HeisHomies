@@ -15,12 +15,14 @@ type Worldview_package struct {
 	Order_bool     bool
 }
 
-func New_Worldview_package(elevator_id int, elevator fsm.Elevator) Worldview_package {
+func New_Worldview_package(elevator_id int, elevator_ fsm.Elevator) Worldview_package {
+	pending_orders := Get_pending_orders()
+	responses := Get_order_respons()
 	return Worldview_package{
 		Elevator_ID:    elevator_id,
-		Elevator:       elevator,
-		Order_requeset: Get_pending_orders(),
-		Order_response: Get_order_respons(),
+		Elevator:       elevator_,
+		Order_requeset: pending_orders,
+		Order_response: responses,
 		Order_bool:     false,
 	}
 }

@@ -3,11 +3,17 @@ package fsm
 import (
 	"Driver-go/elevio"
 	"fmt"
+	"sync"
 )
 
-var elevator Elevator = NewElevator()
+var (
+	elevator       Elevator = NewElevator()
+	elevator_mutex sync.Mutex
+)
 
 func GetElevatorStruct() Elevator {
+	elevator_mutex.Lock()
+	defer elevator_mutex.Unlock()
 	return elevator
 }
 

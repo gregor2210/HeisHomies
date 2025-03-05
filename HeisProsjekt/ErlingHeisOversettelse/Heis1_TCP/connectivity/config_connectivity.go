@@ -8,7 +8,7 @@ const (
 	TIMEOUT = 3
 
 	// Worldview max package size
-	PACKAGE_SIZE = 1024
+	PACKAGE_SIZE = 1500
 )
 
 var (
