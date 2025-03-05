@@ -132,7 +132,7 @@ func main() {
 			}
 
 			//priority_value := fsm.Calculate_priority_value(received_world_view.)
-			connectivity.Receved_order_requests(received_world_view.Order_requeset) //Mulig vi kan flytte denne inn i conneciton pakka
+			connectivity.Receved_order_requests(received_world_view.Order_requeset, received_world_view.Elevator_ID) //Mulig vi kan flytte denne inn i conneciton pakka
 			fmt.Println("Receved_order_response, id: ", received_world_view.Elevator_ID)
 			connectivity.Receved_order_response(received_world_view.Order_response)
 

@@ -169,7 +169,7 @@ func SendOrderToSpesificElevator(done_processed_order DoneProcessedOrder) bool {
 
 }
 
-func Receved_order_requests(received_order_requests []OrderRequests) {
+func Receved_order_requests(received_order_requests []OrderRequests, received_from_id int) {
 	fmt.Println("Received order request----------------------------------")
 	fmt.Println("Pending Orders:")
 	for _, order := range pending_orders {
@@ -222,8 +222,9 @@ func Receved_order_requests(received_order_requests []OrderRequests) {
 	// Iterate over each order in order_response
 	for _, existing_order_response := range order_response {
 		found := false
+
 		for _, received := range received_order_requests {
-			if existing_order_response.Original_elevator == received.Original_elevator && existing_order_response.Time == received.Time {
+			if existing_order_response.Original_elevator == received.Original_elevator && existing_order_response.Time == received.Time && existing_order_response.Original_elevator == received_from_id {
 				found = true
 				break
 			}
