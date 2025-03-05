@@ -32,3 +32,5 @@ Priority value: 50
 
 Den tar å sletter en gammel response selv om den ikke er gammel. Må være noe tull i logikken på sletting..
 Tror jeg må printe Response matrisene for å se hvordan de ser ut..
+
+Bugsene kan komme fra hvis hvis en heis motar en rquest. så lager den en response som den tredje ser og reagerer på!

@@ -10,11 +10,11 @@ import (
 )
 
 type OrderRequests struct {
-	Original_elevator        int
-	Responder_elevator       int
-	Time                     string
-	Button_event             elevio.ButtonEvent
-	Elevator_priority_values [NR_OF_ELEVATORS]int
+	Original_elevator               int
+	Responder_elevator              int
+	Time                            string
+	Button_event                    elevio.ButtonEvent
+	Elevator_priority_value_respond int
 }
 
 type SingleResponse struct {
@@ -56,14 +56,12 @@ func Get_order_respons() []OrderRequests {
 	return order_response
 }
 
-func New_order(floor int, button int, priority_value int) {
+func New_order(button_event elevio.ButtonEvent, priority_value int) {
 	fmt.Println("New Order")
 	pending_orders_mutex.Lock()
 	defer pending_orders_mutex.Unlock()
 
 	//Setting up the new order
-	butten_type := elevio.ButtonType(button)
-	button_event := elevio.ButtonEvent{Floor: floor, Button: butten_type}
 	now := time.Now()
 	now_str := now.Format("2006/01/02 15:04:05.999999999")
 	fmt.Println("now_str", now_str)
@@ -103,7 +101,7 @@ loop:
 		select {
 		case single_response := <-singel_response_chan:
 			if responses[single_response.receved_from_id] == 0 {
-				fmt.Println("Got a new response, added")
+				fmt.Println("Got a new response, added, from", single_response.receved_from_id)
 				responses[single_response.receved_from_id] = single_response.priority_value
 				responses_to_sort = append(responses_to_sort, single_response.priority_value)
 				response_counter++
@@ -120,7 +118,7 @@ loop:
 		}
 
 	}
-
+	fmt.Println("wait for respond loop finished!")
 	pending_orders_mutex.Lock()
 	defer pending_orders_mutex.Unlock()
 	//remove the order from the pending order!
@@ -172,7 +170,23 @@ func SendOrderToSpesificElevator(done_processed_order DoneProcessedOrder) bool {
 }
 
 func Receved_order_requests(received_order_requests []OrderRequests) {
-	//fmt.Println("Received order request")
+	fmt.Println("Received order request----------------------------------")
+	fmt.Println("Pending Orders:")
+	for _, order := range pending_orders {
+		fmt.Printf("Original Elevator: %d, Responder Elevator: %d, Time: %s, Priority: %d\n",
+			order.Original_elevator, order.Responder_elevator, order.Time, order.Elevator_priority_value_respond)
+	}
+
+	fmt.Println("\nOrder Response:")
+	for _, order := range order_response {
+		fmt.Printf("Original Elevator: %d, Responder Elevator: %d, Time: %s, Priority: %d\n",
+			order.Original_elevator, order.Responder_elevator, order.Time, order.Elevator_priority_value_respond)
+	}
+	fmt.Println("\nRECEVED Order Response:")
+	for _, order := range received_order_requests {
+		fmt.Printf("Original Elevator: %d, Responder Elevator: %d, Time: %s, Priority: %d\n",
+			order.Original_elevator, order.Responder_elevator, order.Time, order.Elevator_priority_value_respond)
+	}
 	order_response_mutex.Lock()
 	defer order_response_mutex.Unlock()
 	//Receves the incomming order_request_array
@@ -183,24 +197,47 @@ func Receved_order_requests(received_order_requests []OrderRequests) {
 
 	//Deleting responses that are not received_order_requests with the same sender id
 	//Iterate over each order in order_response
-	for j := 0; j < len(order_response); j++ {
-		order := order_response[j]
-		// Check if the order is in received_order_requests
+	/*
+		for j := 0; j < len(order_response); j++ {
+			existing_order_response := order_response[j]
+			// Check if the order is in received_order_requests
+			found := false
+			for _, received := range received_order_requests {
+				if existing_order_response.Original_elevator == received.Original_elevator && existing_order_response.Time == received.Time {
+					found = true
+					break
+				}
+			}
+			// If the order is not in received_order_requests, remove it from order_response
+			if !found {
+				//Dette er sånn man fjærner element j fra en liste
+				fmt.Println("Removing a old response")
+				order_response = append(order_response[:j], order_response[j+1:]...)
+				j-- // Decrement j to account for the removed element
+			}
+		}*/
+	//NEW
+	var filtered_order_response []OrderRequests
+
+	// Iterate over each order in order_response
+	for _, existing_order_response := range order_response {
 		found := false
 		for _, received := range received_order_requests {
-			if order.Original_elevator == received.Original_elevator && order.Time == received.Time {
+			if existing_order_response.Original_elevator == received.Original_elevator && existing_order_response.Time == received.Time {
 				found = true
 				break
 			}
 		}
-		// If the order is not in received_order_requests, remove it from order_response
-		if !found {
-			//Dette er sånn man fjærner element j fra en liste
-			fmt.Println("Removing a old response")
-			order_response = append(order_response[:j], order_response[j+1:]...)
-			j-- // Decrement j to account for the removed element
+		// Add the order only if it's found in received_order_requests
+		if found {
+			filtered_order_response = append(filtered_order_response, existing_order_response)
+		} else {
+			fmt.Println("Removing an old response")
 		}
 	}
+
+	// Update order_response with the filtered slice
+	order_response = filtered_order_response
 
 	//Generating new response
 	for _, receved_order := range received_order_requests {
@@ -220,7 +257,7 @@ func Receved_order_requests(received_order_requests []OrderRequests) {
 			fmt.Println("Generating new response")
 			priority_value := fsm.Calculate_priority_value(receved_order.Button_event) // IKKE VELDIG PENT AT DENNE BLIR BRUKT HER!
 			receved_order.Responder_elevator = ID
-			receved_order.Elevator_priority_values[ID] = priority_value
+			receved_order.Elevator_priority_value_respond = priority_value
 			order_response = append(order_response, receved_order)
 			// ...
 		}
@@ -230,14 +267,15 @@ func Receved_order_requests(received_order_requests []OrderRequests) {
 }
 
 func Receved_order_response(received_order_responses []OrderRequests) {
-	//fmt.Println("Receved_order_response")
+	//fmt.Println("Receved_order_response, id: ")
 	for _, order := range received_order_responses {
 		if order.Original_elevator == ID {
 			// Found a order respond that responds to one of our requests
 			//Check if there still is possible to submit repons, by cheching if the chennel is down
 			respnd_chan, exist := my_request_responses_chans[order.Time]
 			if exist {
-				response := SingleResponse{order.Responder_elevator, order.Elevator_priority_values[order.Responder_elevator]}
+				fmt.Println("Send response to wait go, from id: ", order.Responder_elevator)
+				response := SingleResponse{order.Responder_elevator, order.Elevator_priority_value_respond}
 				respnd_chan <- response
 			} else {
 				fmt.Println("Response no longer valid")

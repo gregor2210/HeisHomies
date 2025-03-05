@@ -82,10 +82,11 @@ func main() {
 			fmt.Printf("%+v\n", button_event)
 
 			if len(connectivity.Get_all_online_ids()) != 1 && button_event.Button != elevio.BT_Cab {
+				connectivity.PrintIsOnline()
 				//This is start the prosses of finding the best elevator, only if there are other elevators online
 				//This will also not run if it is a cab request
 				priority_value := fsm.Calculate_priority_value(button_event)
-				connectivity.New_order(button_event.Floor, int(button_event.Button), priority_value)
+				connectivity.New_order(button_event, priority_value)
 			} else {
 				// If elevator do not see any other elevators are online. Do the request selfe
 				fmt.Println("No other online elevators or a cab call. Take order")
@@ -132,6 +133,7 @@ func main() {
 
 			//priority_value := fsm.Calculate_priority_value(received_world_view.)
 			connectivity.Receved_order_requests(received_world_view.Order_requeset) //Mulig vi kan flytte denne inn i conneciton pakka
+			fmt.Println("Receved_order_response, id: ", received_world_view.Elevator_ID)
 			connectivity.Receved_order_response(received_world_view.Order_response)
 
 		case received_order := <-order_to_send_chan:
