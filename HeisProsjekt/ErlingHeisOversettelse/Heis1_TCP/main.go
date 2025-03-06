@@ -131,6 +131,9 @@ func main() {
 		case received_world_view := <-TCP_receive_channel:
 			//fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
 
+			//storing worldview
+			connectivity.Store_worldview(received_world_view.Elevator_ID, received_world_view)
+
 			if received_world_view.Order_bool {
 				fmt.Println("Order receved")
 				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)

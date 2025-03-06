@@ -147,16 +147,18 @@ loop:
 
 	}
 	fmt.Println("wait for respond loop finished!")
+
+	//Remoing the this wait order respons pending order from pending_order
 	pending_orders_mutex.Lock()
-	//defer pending_orders_mutex.Unlock()
-	//remove the order from the pending order!
-	for i, v := range pending_orders {
-		if v.Unique_ID == unique_id {
-			//removing index i from pending order
-			pending_orders = append(pending_orders[:i], pending_orders[i+1:]...)
+	filtered_orders := pending_orders[:0] // Keeps the same underlying array
+	for _, v := range pending_orders {
+		if v.Unique_ID != unique_id {
+			filtered_orders = append(filtered_orders, v)
 		}
 	}
+	pending_orders = filtered_orders
 	pending_orders_mutex.Unlock()
+
 	//Choose who will get the order. find highest value and then the correspoinding index
 	sort.Sort(sort.Reverse(sort.IntSlice(responses_to_sort))) // Sort descending
 	done_processed_order := DoneProcessedOrder{responses, responses_to_sort, order}

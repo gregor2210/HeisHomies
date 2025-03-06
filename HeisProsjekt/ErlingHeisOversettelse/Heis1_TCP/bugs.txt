@@ -36,3 +36,6 @@ exit status 2
 
 Vet ikke hva denne var!!!!
 Skjer kunn på pc2. så sikkert noe med antall heiser id problem!
+
+
+TROR BUGG 3 ER LØST!!!!!!!!!!
