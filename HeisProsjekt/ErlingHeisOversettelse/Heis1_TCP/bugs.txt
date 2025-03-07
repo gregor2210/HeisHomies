@@ -10,3 +10,5 @@
 NR 3 OG 4 HAR JEG IKKE PRØVD Å LØSE ORDENTLIG!
 
 5) Vi kan ikke endre antall etasjer i heisen
+
+6) Lys skrur seg ikke på påtvers av heisene nå. Ønsker vi det?
