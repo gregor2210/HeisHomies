@@ -126,7 +126,7 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 		//Server setup
 		for j := ID + 1; j < NR_OF_ELEVATORS; j++ {
 			//Server_conn_setup
-			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) {
+			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) && !get_rescever_running_matrix(ID, j) {
 				fmt.Println("Starting up TCP_server_setup. ", ID, "listening for: ", j)
 				go TCP_server_setup(j)
 			}
@@ -141,7 +141,7 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 		//Client setup
 		for i := 0; i < ID; i++ {
 			//Client_conn_setup
-			if !get_trying_to_setup_matrix(i, ID) && !IsOnline(i) {
+			if !get_trying_to_setup_matrix(i, ID) && !IsOnline(i) && !get_rescever_running_matrix(i, ID) {
 				fmt.Println("Starting up TCP_client_setup. ", ID, "dialing to: ", i)
 				go TCP_client_setup(i)
 			}
@@ -226,6 +226,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		err := conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
 		if err != nil {
 			fmt.Println("Conn not open")
+			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
 			set_rescever_running_matrix(i, j, false)
 			return
 		}

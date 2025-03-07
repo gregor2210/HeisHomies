@@ -1,41 +1,12 @@
-1) Når vi tester med packetloss så får vi av og til error på deserialize:
-DATA MOTATT! 2025/02/28 08:36:36 failed to deserialize:gob: duplicate type received
-exit status 1
-Er uikker på hvorfor, men kan være korrupt pakke? 
-VI kan bare fortsette uten å ta log.Fatal men da må vi legge inn en error hondtering som sier til avsender at vi ikke mottok  på korrekt måte.
+1) Fungere fint ved 25% pakketap. 50% faller egt alle heiser ut. MULIG vi kan redigere timeout tiden? Men vi må nokk rote med TCP instillinger
 
 2) Ved mye packetloss så begynner TCP og bruke lenger tid på å retrye hvis den feiler flere ganger på rad. Ved høyt pakketap står den på DAIL veldig lenge.
 
 
-3) Got a new response, added, from 0
-All responses receved
-wait for respond loop finished!
-Got a new response, added, from 0
-All responses receved
-wait for respond loop finished!
-Got a new response, added, from 0
-All responses receved
-wait for respond loop finished!
-Sending order to spesiffic pc
-Inside send order to spesific elevator!
-Got a new response, added, from 0
-All responses receved
-wait for respond loop finished!
-panic: runtime error: index out of range [2] with length 2
+3) Programet går av og til inn i deadlock!!!!! Vet ikke hvor. Den siste meldingen som alltid skrives er faild: "Error sending, connection lost."
 
-goroutine 1 [running]:
-Driver-go/connectivity.get_listen_dail_conn_matrix(0xf6ff78?, 0xc000090038?)
-        C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/connectivity/Networking.go:74 +0xfb
-Driver-go/connectivity.Send_order_to_spesific_elevator(0x1, {0xc000090038?, 0xc000203ab8?})
-        C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/connectivity/Networking.go:334 +0xa5
-Driver-go/connectivity.SendOrderToSpesificElevator({{0x28, 0x3c, 0x32}, {0xc0000152e0, 0x3, 0x4}, {0x3, 0x1}})       
-        C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/connectivity/orders.go:191 +0x11f
-main.main()
-        C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/main.go:145 +0xbca
-exit status 2
+4) programmet havnet også en gang i deadlock etter "New state" ble skrevet idk
 
-Vet ikke hva denne var!!!!
-Skjer kunn på pc2. så sikkert noe med antall heiser id problem!
+NR 3 OG 4 HAR JEG IKKE PRØVD Å LØSE ORDENTLIG!
 
-
-TROR BUGG 3 ER LØST!!!!!!!!!!
+5) Vi kan ikke endre antall etasjer i heisen
