@@ -232,7 +232,6 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		var packetLength uint32
 		err = binary.Read(conn, binary.BigEndian, &packetLength)
 		if err != nil {
-			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
 			fmt.Println("failed to read packetLength:", err)
 			set_rescever_running_matrix(i, j, false)
 			return
@@ -331,11 +330,12 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 	//find correct conn
 	var conn net.Conn
 	if IsOnline(recever_e) {
-		if ID < (NR_OF_ELEVATORS-1) && get_listen_dail_conn_matrix(ID, recever_e) != nil {
+
+		if get_listen_dail_conn_matrix(ID, recever_e) != nil {
 			conn = get_listen_dail_conn_matrix(ID, recever_e)
 			fmt.Println("Here1")
 
-		} else if recever_e < (NR_OF_ELEVATORS-1) && get_listen_dail_conn_matrix(recever_e, ID) != nil {
+		} else if get_listen_dail_conn_matrix(recever_e, ID) != nil {
 			conn = get_listen_dail_conn_matrix(recever_e, ID)
 			fmt.Println("Here2")
 		} else {

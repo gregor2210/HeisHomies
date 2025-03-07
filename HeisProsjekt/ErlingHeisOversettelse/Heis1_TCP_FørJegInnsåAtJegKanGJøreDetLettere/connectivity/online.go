@@ -28,7 +28,6 @@ func Online_setup(offline_update_chan_ chan int) {
 	offline_update_chan = offline_update_chan_
 }
 
-/*
 func get_isOnline() [NR_OF_ELEVATORS]bool {
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
@@ -40,7 +39,6 @@ func set_isOnline(id int, state bool) {
 	defer isOnline_mutex.Unlock()
 	isOnline[id] = state
 }
-*/
 
 // AddElevatorOnline sets the elevator ID to online in the isOnline list
 func SetElevatorOnline(elevatorID int) {
@@ -51,50 +49,33 @@ func SetElevatorOnline(elevatorID int) {
 	if elevatorID >= 0 && elevatorID < NR_OF_ELEVATORS {
 
 		// If is only to make the print only appare if there is a chainge in state
-		if !isOnline[elevatorID] {
-			isOnline[elevatorID] = true
-
+		if isOnline[elevatorID] {
 			fmt.Println("Setting ElevatorID:", elevatorID, "to ONLINE!")
-			for i, online := range isOnline {
-				status := "offline"
-				if online {
-					status = "online"
-				}
-				log.Printf("Elevator %d is %s\n", i, status)
-			}
+			
 		}
+
+		isOnline[elevatorID] = true
 
 	} else {
 		log.Fatal("Not valid elevatorID when SetElevatorOnline()", elevatorID)
 	}
-	fmt.Println("Returning from SetElevatorOnline")
 }
 
 // RemoveElevatorOnline sets the elevator ID to offline in the isOnline list
 func SetElevatorOffline(elevatorID int) {
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
-
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
+
 		// If is only to make the print only appare if there is a chainge in state
 		if isOnline[elevatorID] {
-			isOnline[elevatorID] = false
-			offline_update_chan <- elevatorID
-
 			fmt.Println("Setting ElevatorID:", elevatorID, "to OFLINE!")
-			for i, online := range isOnline {
-				status := "offline"
-				if online {
-					status = "online"
-				}
-				log.Printf("Elevator %d is %s\n", i, status)
-			}
 		}
 
+		isOnline[elevatorID] = false
 	} else {
 		log.Fatal("Not valid elevatorID when SetElevatorOffline():", elevatorID)
 	}
-	fmt.Println("Returning from SetElevatorOffline")
 }
 
 // Return true if is online
@@ -147,4 +128,9 @@ func Get_all_online_ids() []int {
 		}
 	}
 	return online_elevators
+}
+
+func get_lowest_online_id() int {
+	//returning the online elevator with lowest id
+	return Get_all_online_ids()[0]
 }

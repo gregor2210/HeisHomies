@@ -33,12 +33,14 @@ func main() {
 
 	// Go routine to send world view every second
 	var world_view_send_ticker <-chan time.Time
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(1000 * time.Millisecond)
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
 	world_view_send_ticker = ticker.C
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+	//Order setup
+	order_to_send_chan := make(chan connectivity.DoneProcessedOrder)
+	connectivity.Order_setup(order_to_send_chan)
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//Online setup
@@ -88,8 +90,8 @@ func main() {
 				connectivity.PrintIsOnline()
 				//This is start the prosses of finding the best elevator, only if there are other elevators online
 				//This will also not run if it is a cab request
-
-				connectivity.New_order(button_event)
+				priority_value := fsm.Calculate_priority_value(button_event)
+				connectivity.New_order(button_event, priority_value)
 			} else {
 				// If elevator do not see any other elevators are online. Do the request selfe
 				fmt.Println("No other online elevators or a cab call. Take order")
@@ -119,8 +121,16 @@ func main() {
 		case <-world_view_send_ticker:
 			//fmt.Println("Sending world view")
 			connectivity.Send_world_view()
+
+			send_world_view_package := connectivity.New_Worldview_package(connectivity.ID, fsm.GetElevatorStruct())
+			connectivity.PrintOrderRequest(send_world_view_package.Order_requeset)
+			connectivity.PrintOrderRequest(send_world_view_package.Order_response)
+
 			//connectivity.PrintIsOnline()
 
+			//case world_view := <-TCP_receive_channel:
+			//fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
+			//fmt.Println("\n\n")
 			//time.Sleep(500 * time.Duration(inputPollRateMs))
 
 		case received_world_view := <-TCP_receive_channel:
@@ -134,16 +144,20 @@ func main() {
 				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
 			}
 
-		/*case received_order := <-order_to_send_chan:
-		if !connectivity.SendOrderToSpesificElevator(received_order) {
-			fmt.Println("Failed to send order. taking it selfe")
-			fsm.Fsm_onRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
-		}
-		*/
+			//priority_value := fsm.Calculate_priority_value(received_world_view.)
+			connectivity.Receved_order_requests(received_world_view.Order_requeset, received_world_view.Elevator_ID) //Mulig vi kan flytte denne inn i conneciton pakka
+			//fmt.Println("Receved_order_response, id: ", received_world_view.Elevator_ID)
+			connectivity.Receved_order_response(received_world_view.Order_response)
+
+		case received_order := <-order_to_send_chan:
+			if !connectivity.SendOrderToSpesificElevator(received_order) {
+				fmt.Println("Failed to send order. taking it selfe")
+				fsm.Fsm_onRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
+			}
+
 		case id_of_offline_elevator := <-offline_update_chan:
 			//When online staus of a elevator goes from online to offline. We get the id and start the backup prosess
 			//THis will insure not lost calls
-			fmt.Println("Running start backup")
 			connectivity.Start_backup_prosess(id_of_offline_elevator)
 
 		}
