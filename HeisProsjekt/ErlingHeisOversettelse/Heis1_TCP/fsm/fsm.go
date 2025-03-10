@@ -20,9 +20,6 @@ func GetElevatorStruct() Elevator {
 //ElevatorOUtputDevice er den utdelte go driverern!
 
 func setAllLights(elevator Elevator) {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
-
 	for floor := 0; floor < NumFloors; floor++ {
 		for btn := 0; btn < NumButtons; btn++ {
 			elevio.SetButtonLamp(elevio.ButtonType(btn), floor, elevator.Requests[floor][btn])
@@ -37,8 +34,6 @@ func setAllLights(elevator Elevator) {
 // }
 
 func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
 	fmt.Printf("\n\nfsm_onRequestButtonPress(%d)\n", btn_floor)
 
 	switch elevator.Behaviour {
@@ -75,8 +70,6 @@ func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
 }
 
 func Fsm_onFloorArrival(newFloor int) {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
 	fmt.Printf("\n\nfsm_onFloorArrival(%d)\n", newFloor)
 	elevator.Floor = newFloor
 
@@ -99,8 +92,6 @@ func Fsm_onFloorArrival(newFloor int) {
 }
 
 func Fsm_onDoorTimeout() {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
 	fmt.Printf("\n\nfsm_onDoorTimeout()\n")
 
 	switch elevator.Behaviour {
