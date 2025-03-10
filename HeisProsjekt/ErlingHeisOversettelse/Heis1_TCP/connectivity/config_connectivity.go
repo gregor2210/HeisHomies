@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -20,13 +21,11 @@ var (
 )
 
 func init() {
-	port_debug := flag.String("pprof-port", "6060", "Port for pprof")
-
+	flag.IntVar(&ID, "id", 0, "Specify the id with -id")
 	go func() {
-		log.Println(http.ListenAndServe("localhost:"+*port_debug, nil))
+		log.Println(http.ListenAndServe("localhost:"+strconv.Itoa(6060+ID), nil))
 	}()
 
-	flag.IntVar(&ID, "id", 0, "Specify the id with -id")
 	flag.Parse()
 
 }
