@@ -34,6 +34,8 @@ func setAllLights(elevator Elevator) {
 // }
 
 func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
+	elevator_mutex.Lock()
+	defer elevator_mutex.Unlock()
 	fmt.Printf("\n\nfsm_onRequestButtonPress(%d)\n", btn_floor)
 
 	switch elevator.Behaviour {
@@ -70,6 +72,8 @@ func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
 }
 
 func Fsm_onFloorArrival(newFloor int) {
+	elevator_mutex.Lock()
+	defer elevator_mutex.Unlock()
 	fmt.Printf("\n\nfsm_onFloorArrival(%d)\n", newFloor)
 	elevator.Floor = newFloor
 
@@ -92,6 +96,8 @@ func Fsm_onFloorArrival(newFloor int) {
 }
 
 func Fsm_onDoorTimeout() {
+	elevator_mutex.Lock()
+	defer elevator_mutex.Unlock()
 	fmt.Printf("\n\nfsm_onDoorTimeout()\n")
 
 	switch elevator.Behaviour {

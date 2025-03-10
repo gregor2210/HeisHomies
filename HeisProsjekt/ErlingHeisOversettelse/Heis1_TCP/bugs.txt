@@ -8,7 +8,21 @@
 4) programmet havnet også en gang i deadlock etter "New state" ble skrevet idk
 
 NR 3 OG 4 HAR JEG IKKE PRØVD Å LØSE ORDENTLIG!
+Connected to localhost:8012
+Setting ElevatorID: 1 to ONLINE!
+2025/03/10 11:33:55 Elevator 0 is online
+2025/03/10 11:33:55 Elevator 1 is online
+2025/03/10 11:33:55 Elevator 2 is online
+Returning from SetElevatorOnline
+Starting handle_receive for elevator we are connected to
+HANDLE RECEIVE STARTED, ID: 1
+Error sending, connection lost.
+^Csignal: interrupt
 
 5) Vi kan ikke endre antall etasjer i heisen
 
 6) Lys skrur seg ikke på påtvers av heisene nå. Ønsker vi det?
+
+7) legg til Readme fil
+
+8) Sett heis til start poss må resette lampe
