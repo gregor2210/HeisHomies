@@ -121,6 +121,12 @@ func DeserializeElevator(data []byte) (Worldview_package, error) {
 }
 
 func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
+	// WIll every 2 second loop though and try to first start different prosedyres
+	//Try to start TCP server setup to generate a connection (conn)
+	// try to start handle receve from given tcp connection
+	// try to start TCP client setup to generate a connection (conn)
+	//try to start receive from given conneciton
+
 	fmt.Println("Starting TCP receving setup")
 	for { //for loop to keep the function running
 		//Server setup

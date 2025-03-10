@@ -134,12 +134,6 @@ func main() {
 				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
 			}
 
-		/*case received_order := <-order_to_send_chan:
-		if !connectivity.SendOrderToSpesificElevator(received_order) {
-			fmt.Println("Failed to send order. taking it selfe")
-			fsm.Fsm_onRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
-		}
-		*/
 		case id_of_offline_elevator := <-offline_update_chan:
 			//When online staus of a elevator goes from online to offline. We get the id and start the backup prosess
 			//THis will insure not lost calls
