@@ -254,11 +254,6 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		}
 		//fmt.Println("DATA MOTATT! ")
 
-		// Remove padding before deserializing
-		//trimmedData := bytes.TrimRight(buffer, "\x00")
-
-		//fmt.Printf("trimmedData: %x\n", trimmedData)
-
 		//deserialize the buffer to worldview package
 		receved_world_view_package, err := DeserializeElevator(buffer)
 		if err != nil {
@@ -302,6 +297,7 @@ func Send_world_view() {
 				server_conn.Close()
 
 			}
+			//writing packet length
 			err = binary.Write(server_conn, binary.BigEndian, packetLength)
 			if err != nil {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
@@ -336,6 +332,7 @@ func Send_world_view() {
 				client_conn.Close()
 			}
 
+			//writing packetlength
 			err = binary.Write(client_conn, binary.BigEndian, packetLength)
 			if err != nil {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
