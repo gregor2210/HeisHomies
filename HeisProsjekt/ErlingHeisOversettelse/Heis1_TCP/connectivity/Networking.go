@@ -206,7 +206,7 @@ func TCP_client_setup(e_dailing_to_ID int) {
 		conn, err := net.Dial("tcp", client_ip)
 		if err != nil {
 			fmt.Println("Dailing id ", e_dailing_to_ID, "failed, retrying in 2 seconds...")
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 			continue
 		}
 
@@ -293,10 +293,20 @@ func Send_world_view() {
 
 			//sending first packetLength, before actual packet. Preventing packet stacking
 			server_conn := get_listen_dail_conn_matrix(ID, connected_e_ID)
+
+			//starting write settison for givven server conn
+			err = server_conn.SetWriteDeadline(time.Now().Add(TIMEOUT * time.Second))
+			if err != nil {
+				fmt.Println("Failed to set write deadline for server write:", err, connected_e_ID)
+				SetElevatorOffline(connected_e_ID)
+				server_conn.Close()
+
+			}
 			err = binary.Write(server_conn, binary.BigEndian, packetLength)
 			if err != nil {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				server_conn.Close()
 			}
 
 			//writing acctual package
@@ -304,19 +314,33 @@ func Send_world_view() {
 			if err != nil {
 				fmt.Println("Error sending, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				server_conn.Close()
 			} else {
 				//fmt.Println("Succes sending worldview")
 			}
+
+			//turning off write delay after write session is finished
+			server_conn.SetWriteDeadline(time.Time{})
 		}
 	}
 	for connected_e_ID := 0; connected_e_ID < ID; connected_e_ID++ {
 		if IsOnline(connected_e_ID) {
 			//sending first packetLength, before actual packet. Preventing packet stacking
 			client_conn := get_listen_dail_conn_matrix(connected_e_ID, ID)
+
+			//starting write settison for givven client conn
+			err = client_conn.SetWriteDeadline(time.Now().Add(TIMEOUT * time.Second))
+			if err != nil {
+				fmt.Println("Failed to set write deadline for client write:", err, connected_e_ID)
+				SetElevatorOffline(connected_e_ID)
+				client_conn.Close()
+			}
+
 			err = binary.Write(client_conn, binary.BigEndian, packetLength)
 			if err != nil {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				client_conn.Close()
 			}
 
 			//writing acctual package
@@ -324,7 +348,11 @@ func Send_world_view() {
 			if err != nil {
 				fmt.Println("Error sending, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				client_conn.Close()
 			}
+
+			//turning off write delay after write session is finished
+			client_conn.SetWriteDeadline(time.Time{})
 		}
 	}
 }
