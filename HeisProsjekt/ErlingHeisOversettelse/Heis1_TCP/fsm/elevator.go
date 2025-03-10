@@ -7,8 +7,8 @@ import (
 )
 
 // NumFloors and NumButtons are global variables
-var NumFloors int = 4
-var NumButtons int = 3
+const NumFloors int = 4
+const NumButtons int = 3
 
 // Converting Dirn to MotorDirection
 // For å få hvilken retning motoren fysisk skal gå basert på planlagt retning
@@ -52,7 +52,7 @@ type Elevator struct {
 	Dirn      Dirn
 	Behaviour ElevatorBehaviour
 	//Buttons in hall and cab x=floor y=button
-	Requests           [4][3]bool
+	Requests           [NumFloors][NumButtons]bool
 	DoorOpenDuration_s float64
 	Obstruction        bool
 }
@@ -61,10 +61,10 @@ type Elevator struct {
 func NewElevator() Elevator {
 	var elevator_setup Elevator = Elevator{
 		ID:                 0,
-		Floor:              -1,           // Uninitialized floor
-		Dirn:               D_Stop,       // Not moving
-		Behaviour:          EB_Idle,      // Idle state
-		Requests:           [4][3]bool{}, // No requests initially
+		Floor:              -1,                            // Uninitialized floor
+		Dirn:               D_Stop,                        // Not moving
+		Behaviour:          EB_Idle,                       // Idle state
+		Requests:           [NumFloors][NumButtons]bool{}, // No requests initially
 		DoorOpenDuration_s: 3.0,
 		Obstruction:        false, // Default door open duration
 	}
