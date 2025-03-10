@@ -284,10 +284,6 @@ func Send_world_view() {
 		log.Fatal("error: serialized data too large")
 	}
 
-	// Pad data with zeros to make it exactly 1024 bytes
-	//paddedData := make([]byte, PACKAGE_SIZE)
-	//copy(paddedData, serialized_world_view_package)
-
 	//Finding package length
 	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
 
@@ -336,6 +332,8 @@ func Send_world_view() {
 func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
 	fmt.Println("Inside send order to spesific elevator!")
 	//find correct conn
+	// Because we use a matrix with listen as rwos and cols as dail we need a general program that find the conn
+	// when the code dose not know if it has dailed or are listening to a spesific id before checking.
 	var conn net.Conn
 	if IsOnline(recever_e) {
 		if ID < (NR_OF_ELEVATORS-1) && get_listen_dail_conn_matrix(ID, recever_e) != nil {
