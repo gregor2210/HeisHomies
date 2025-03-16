@@ -1,11 +1,23 @@
 1) Fungere fint ved 25% pakketap. 50% faller egt alle heiser ut. MULIG vi kan redigere timeout tiden? Men vi må nokk rote med TCP instillinger
+- Har gjort at den ikke kan prøve lenger en TIMEOUT er satt til. noe mer vi kan gjøre?
 
-2) Ved mye packetloss så begynner TCP og bruke lenger tid på å retrye hvis den feiler flere ganger på rad. Ved høyt pakketap står den på DAIL veldig lenge.
+5) Vi kan ikke endre antall etasjer i heisen
+
+7) legg til Readme fil
+
+9) Ved høyt pakketap kan vi fort ende med at alle heisene er på men ikke klarer å komunisere med hverandre. Skal de ta ikke ta imot ordere? fordi det er ikke sikkert at det finnes en backup?
 
 
-3) Programet går av og til inn i deadlock!!!!! Vet ikke hvor. Den siste meldingen som alltid skrives er faild: "Error sending, connection lost."
 
-4) programmet havnet også en gang i deadlock etter "New state" ble skrevet idk
+
+
+
+--------------------------- Tror løst-----------------------------------------
+6) LØST!!! tror jeg . Lys skrur seg ikke på påtvers av heisene nå. Ønsker vi det? 
+
+3) TROR LØST?? Programet går av og til inn i deadlock!!!!! Vet ikke hvor. Den siste meldingen som alltid skrives er faild: "Error sending, connection lost."
+
+4) TROR LØST??? programmet havnet også en gang i deadlock etter "New state" ble skrevet idk
 
 NR 3 OG 4 HAR JEG IKKE PRØVD Å LØSE ORDENTLIG!
 Connected to localhost:8012
@@ -19,10 +31,7 @@ HANDLE RECEIVE STARTED, ID: 1
 Error sending, connection lost.
 ^Csignal: interrupt
 
-5) Vi kan ikke endre antall etasjer i heisen
+8) TROR LØST??? Sett heis til start poss må resette lampe
 
-6) Lys skrur seg ikke på påtvers av heisene nå. Ønsker vi det?
-
-7) legg til Readme fil
-
-8) Sett heis til start poss må resette lampe
+2) Ved mye packetloss så begynner TCP og bruke lenger tid på å retrye hvis den feiler flere ganger på rad. Ved høyt pakketap står den på DAIL veldig lenge.
+- Tror løst. Den vil timeout etter hvor lang TIMEOUT er .

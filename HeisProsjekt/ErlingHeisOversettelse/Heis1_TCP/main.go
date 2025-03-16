@@ -117,6 +117,11 @@ func main() {
 			fsm.TimerStart(3)
 
 		case <-world_view_send_ticker:
+			// 1. sjekker om lamper skal av eller på
+			// 2. Prøver å sende worldview
+
+			connectivity.SetAllLights()
+
 			//fmt.Println("Sending world view")
 			connectivity.Send_world_view()
 			//connectivity.PrintIsOnline()

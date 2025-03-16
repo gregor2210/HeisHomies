@@ -295,6 +295,7 @@ func Send_world_view() {
 				fmt.Println("Failed to set write deadline for server write:", err, connected_e_ID)
 				SetElevatorOffline(connected_e_ID)
 				server_conn.Close()
+				continue
 
 			}
 			//writing packet length
@@ -303,6 +304,7 @@ func Send_world_view() {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
 				server_conn.Close()
+				continue
 			}
 
 			//writing acctual package
@@ -310,7 +312,9 @@ func Send_world_view() {
 			if err != nil {
 				fmt.Println("Error sending, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				fmt.Println("Elevator was set to ofline!!!!! 123")
 				server_conn.Close()
+				continue
 			} else {
 				//fmt.Println("Succes sending worldview")
 			}
@@ -330,6 +334,7 @@ func Send_world_view() {
 				fmt.Println("Failed to set write deadline for client write:", err, connected_e_ID)
 				SetElevatorOffline(connected_e_ID)
 				client_conn.Close()
+				continue
 			}
 
 			//writing packetlength
@@ -338,6 +343,7 @@ func Send_world_view() {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
 				client_conn.Close()
+				continue
 			}
 
 			//writing acctual package
@@ -346,6 +352,7 @@ func Send_world_view() {
 				fmt.Println("Error sending, connection lost.")
 				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
 				client_conn.Close()
+				continue
 			}
 
 			//turning off write delay after write session is finished
