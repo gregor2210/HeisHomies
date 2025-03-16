@@ -19,16 +19,11 @@ func main() {
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
 	elevio.Init(ip, NUMFLOORS)
-
-	//var d elevio.MotorDirection = elevio.MD_Up
-	//elevio.SetMotorDirection(d)
-
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	//connectivity.TCP_setup()
 	TCP_receive_channel := make(chan connectivity.Worldview_package)
-	//TCP_send_channel_listen := make(chan connectivity.Worldview_package)
-	//TCP_send_channel_dail := make(chan connectivity.Worldview_package)
+
 	go connectivity.TCP_receving_setup(TCP_receive_channel)
 
 	// Go routine to send world view every second
@@ -38,14 +33,11 @@ func main() {
 	world_view_send_ticker = ticker.C
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//Online setup
 	offline_update_chan := make(chan int)
 	connectivity.Online_setup(offline_update_chan)
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+	// Coms with server setup
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)

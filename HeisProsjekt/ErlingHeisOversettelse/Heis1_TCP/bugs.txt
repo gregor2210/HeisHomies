@@ -7,7 +7,7 @@
 
 9) Ved høyt pakketap kan vi fort ende med at alle heisene er på men ikke klarer å komunisere med hverandre. Skal de ta ikke ta imot ordere? fordi det er ikke sikkert at det finnes en backup?
 
-
+10) legge til i lights at request sjekker om den er ulik forigje gang den sjekket. Slik at vi ikke sender unødvendig mange melinger til heis server?
 
 
 
