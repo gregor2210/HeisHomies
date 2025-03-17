@@ -14,20 +14,22 @@ const (
 )
 
 func main() {
+
+	// setting up connection with elevator server
 	var port int
 	if connectivity.USE_IPS {
 		//if USE_IPS true, use deafult port for elevator server
-		port = Port_server_id0 + connectivity.ID
+		port = Port_server_id0
+
 	} else {
 		// if USE_IPs false, use increasing port nr
-		port = Port_server_id0
+		port = Port_server_id0 + connectivity.ID
 	}
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
 	elevio.Init(ip, NUMFLOORS)
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-	//connectivity.TCP_setup()
+	// Setting up TCP connection loop.
 	TCP_receive_channel := make(chan connectivity.Worldview_package)
 
 	go connectivity.TCP_receving_setup(TCP_receive_channel)
@@ -38,12 +40,11 @@ func main() {
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
 	world_view_send_ticker = ticker.C
 
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//Online setup
 	offline_update_chan := make(chan int)
 	connectivity.Online_setup(offline_update_chan)
-	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-	// Coms with server setup
+
+	// Communication with elevator server setup
 	drv_buttons := make(chan elevio.ButtonEvent)
 	drv_floors := make(chan int)
 	drv_obstr := make(chan bool)
@@ -62,19 +63,22 @@ func main() {
 	//Sjekker om det er en obstruction i heisen. Dersom statuesn på obstruction endrer seg så skriver den true til chanelen drv_obstr. Dersom det ikke er obstruction, skriver den false.
 	go elevio.PollStopButton(drv_stop)
 	//Sjekker om stopknappen er trykket inn. Den vil skrive true eller false til chanelen drv_stop når statusen endrer seg.
-
 	go fsm.PollTimerTimeout(timerTimeoutChan)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	time.Sleep(2000 * time.Millisecond)
-	fmt.Println("Started!")
 
-	//inputPollRateMs := 25
-	prev_floor := -1
-
+	// Sets elevator to valid start possition
 	fsm.SetElevatorToValidStartPossition()
 
+	fmt.Println("Started!")
+
+	// Variabel for logic in forloop
+	// Keeps track of the previuse floor
+	prev_floor := -1
+
+	// Logic loop for elevator and comunication
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
@@ -97,7 +101,8 @@ func main() {
 		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
 			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
-			if a != -1 && a != prev_floor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
+			if a != -1 && a != prev_floor {
+				// Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
 				fsm.Fsm_onFloorArrival(a)
 			}
 			prev_floor = a
@@ -109,26 +114,18 @@ func main() {
 				fsm.Fsm_onDoorTimeout()
 			}
 
-		case a := <-drv_obstr:
+		case a := <-drv_obstr: // If there is an obstuction event, BOOL
 			fmt.Println("Obstruction event toggle")
 			fsm.SetObsructionStatus(a)
 			fsm.TimerStart(3)
 
-		case <-world_view_send_ticker:
+		case <-world_view_send_ticker: // World view ticker happens every x milliseconds
 			// 1. sjekker om lamper skal av eller på
 			// 2. Prøver å sende worldview
-
 			connectivity.SetAllLights()
-
-			//fmt.Println("Sending world view")
 			connectivity.Send_world_view()
-			//connectivity.PrintIsOnline()
 
-			//time.Sleep(500 * time.Duration(inputPollRateMs))
-
-		case received_world_view := <-TCP_receive_channel:
-			//fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
-
+		case received_world_view := <-TCP_receive_channel: // A incoming worldview package, from other computers
 			//storing worldview
 			connectivity.Store_worldview(received_world_view.Elevator_ID, received_world_view)
 
@@ -137,9 +134,9 @@ func main() {
 				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
 			}
 
-		case id_of_offline_elevator := <-offline_update_chan:
+		case id_of_offline_elevator := <-offline_update_chan: // When an elevator goes from online to ofline, this recives the now ofline elevator id
 			//When online staus of a elevator goes from online to offline. We get the id and start the backup prosess
-			//THis will insure not lost calls
+			//This will insure not lost calls
 			fmt.Println("Running start backup")
 			connectivity.Start_backup_prosess(id_of_offline_elevator)
 

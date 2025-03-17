@@ -3,7 +3,6 @@ package connectivity
 import (
 	"Driver-go/elevio"
 	"Driver-go/fsm"
-	"fmt"
 	"sync"
 )
 
@@ -26,10 +25,9 @@ func Get_worldview(id int) Worldview_package {
 }
 
 func Dose_order_exist(button_event elevio.ButtonEvent) bool {
-	fmt.Println("Starting Dose order exist")
+	// Chcks if the order exist in the all the online elevators icluding self
 	floor := button_event.Floor
 	var button int = int(button_event.Button) // 0 hallup, 1 halldown
-	fmt.Println("Dose order exist button type: ", button, " Floor: ", floor)
 	id_of_online_elevators := Get_all_online_ids()
 	for _, id := range id_of_online_elevators {
 		if id == ID {

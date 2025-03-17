@@ -28,22 +28,9 @@ func Online_setup(offline_update_chan_ chan int) {
 	offline_update_chan = offline_update_chan_
 }
 
-/*
-func get_isOnline() [NR_OF_ELEVATORS]bool {
-	isOnline_mutex.Lock()
-	defer isOnline_mutex.Unlock()
-	return isOnline
-}
-
-func set_isOnline(id int, state bool) {
-	isOnline_mutex.Lock()
-	defer isOnline_mutex.Unlock()
-	isOnline[id] = state
-}
-*/
-
 // AddElevatorOnline sets the elevator ID to online in the isOnline list
 func SetElevatorOnline(elevatorID int) {
+	// Sets elevator coresponding to the input id to Online
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
 
@@ -72,6 +59,7 @@ func SetElevatorOnline(elevatorID int) {
 
 // RemoveElevatorOnline sets the elevator ID to offline in the isOnline list
 func SetElevatorOffline(elevatorID int) {
+	// Sets elevator coresponding to the input id to ofline
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
 
@@ -99,6 +87,7 @@ func SetElevatorOffline(elevatorID int) {
 
 // Return true if is online
 func IsOnline(elevatorID int) bool {
+	// Is elevator input online. Returns true or false
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
@@ -123,6 +112,7 @@ func PrintIsOnline() {
 }
 
 func Self_only_online() bool {
+	// Checks if self is the only online elevator, returns ture or false
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
 	for i := 0; i < NR_OF_ELEVATORS; i++ {
@@ -137,6 +127,7 @@ func Self_only_online() bool {
 }
 
 func Get_all_online_ids() []int {
+	// Returns array with all online ids
 	isOnline_mutex.Lock()
 	defer isOnline_mutex.Unlock()
 

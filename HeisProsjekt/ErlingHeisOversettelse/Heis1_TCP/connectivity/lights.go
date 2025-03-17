@@ -3,7 +3,6 @@ package connectivity
 import (
 	"Driver-go/elevio"
 	"Driver-go/fsm"
-	"fmt"
 )
 
 func SetAllLights() {
@@ -27,19 +26,19 @@ func SetAllLights() {
 
 			if req[floor][0] {
 				// Hall up == ture
-				fmt.Println("UP")
+				//fmt.Println("UP")
 				requests[floor][0] = true
 			}
 
 			if req[floor][1] {
 				// Hall down == ture
-				fmt.Println("DOWN")
+				//fmt.Println("DOWN")
 				requests[floor][1] = true
 			}
 		}
 	}
 
-	fmt.Println("Requests:")
+	/*fmt.Println("Requests:")
 	for floor := 0; floor < fsm.NumFloors; floor++ {
 		for btn := 0; btn < fsm.NumButtons-1; btn++ {
 			if requests[floor][btn] {
@@ -47,7 +46,7 @@ func SetAllLights() {
 			}
 		}
 	}
-
+	*/
 	for floor := 0; floor < fsm.NumFloors; floor++ {
 		for btn := 0; btn < fsm.NumButtons-1; btn++ {
 			elevio.SetButtonLamp(elevio.ButtonType(btn), floor, requests[floor][btn])

@@ -36,8 +36,8 @@ var (
 	mu_rescever_running_matrix    sync.Mutex
 )
 
-// // World view sending TCP connection setup
 func init() { // runs when imported
+	// This function setup the TCP_world_view_send_ips_matrix
 
 	// If USE_UPS is true it will setup the ips with spesfied ips
 	if USE_IPS {
@@ -119,6 +119,7 @@ func SerializeElevator(wv Worldview_package) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+// Deserialize the incomming bytes
 func DeserializeElevator(data []byte) (Worldview_package, error) {
 	var wv Worldview_package
 	buf := bytes.NewBuffer(data)
@@ -129,10 +130,11 @@ func DeserializeElevator(data []byte) (Worldview_package, error) {
 
 func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 	// WIll every 2 second loop though and try to first start different prosedyres
-	//Try to start TCP server setup to generate a connection (conn)
+	// Try to start TCP server setup to generate a connection (conn)
 	// try to start handle receve from given tcp connection
 	// try to start TCP client setup to generate a connection (conn)
-	//try to start receive from given conneciton
+	// try to start receive from given conneciton
+	loop_timer := 2 // loop timer in seconds
 
 	fmt.Println("Starting TCP receving setup")
 	for { //for loop to keep the function running
@@ -166,14 +168,15 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 			}
 
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Duration(loop_timer) * time.Second)
 
 	}
 
 }
 
 func TCP_server_setup(incoming_e_ID int) {
-	//Setting up serfor for ID to listen to incoming_e_ID
+	//Setting up server for self (ID) to listen to elevator (incoming_e_ID)
+
 	set_trying_to_setup_matrix(ID, incoming_e_ID, true)
 
 	server_ip := get_TCP_world_view_send_ips_matrix(ID, incoming_e_ID)
@@ -204,10 +207,13 @@ func TCP_server_setup(incoming_e_ID int) {
 }
 
 func TCP_client_setup(e_dailing_to_ID int) {
+	// Setting up client for self (ID) to dail a server (e_dailing_to_ID)
+
 	set_trying_to_setup_matrix(e_dailing_to_ID, ID, true)
 
 	client_ip := get_TCP_world_view_send_ips_matrix(e_dailing_to_ID, ID)
 
+	// Will try to dail every second untill it connects.
 	for {
 		fmt.Printf("Trying to dail to ip: %s\n", client_ip)
 		conn, err := net.Dial("tcp", client_ip)
@@ -229,6 +235,12 @@ func TCP_client_setup(e_dailing_to_ID int) {
 }
 
 func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, ID_of_connected_elevator int, i int, j int) {
+	// This functions should be run as go rutine and handles incomming messages
+	// 1. It sets a dedline for reading messages. If it dose not receive messages withing TIMEOUT seconds it will return. (close the conn)
+	// 2. Try to read the length of the next package
+	// 3. Read next packet that should be the lenght of what we just recived
+	// 4. Decerialize and send worldview package to TCP_receive_channel
+
 	defer conn.Close()
 	set_rescever_running_matrix(i, j, true)
 
@@ -236,6 +248,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 	for {
 		// Replace with actual receiving logic
 
+		// Setting read deadline
 		err := conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
 		if err != nil {
 			fmt.Println("Conn not open")
@@ -243,6 +256,8 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			set_rescever_running_matrix(i, j, false)
 			return
 		}
+
+		// Read packet length
 		var packetLength uint32
 		err = binary.Read(conn, binary.BigEndian, &packetLength)
 		if err != nil {
@@ -251,6 +266,8 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			set_rescever_running_matrix(i, j, false)
 			return
 		}
+
+		// Read incomming worldview packet (bytes)
 		buffer := make([]byte, packetLength)
 		_, err = conn.Read(buffer)
 		if err != nil {
@@ -259,7 +276,6 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			set_rescever_running_matrix(i, j, false)
 			return
 		}
-		//fmt.Println("DATA MOTATT! ")
 
 		//deserialize the buffer to worldview package
 		receved_world_view_package, err := DeserializeElevator(buffer)
@@ -276,6 +292,10 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 }
 
 func Send_world_view() {
+	// This trys sending a new worldview package to all online elevators
+	// First to all elevators that are connected to us as clients
+	// Second to all elevators that we are connected to as clients
+
 	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
 	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
 	if err != nil {
@@ -322,8 +342,6 @@ func Send_world_view() {
 				fmt.Println("Elevator was set to ofline!!!!! 123")
 				server_conn.Close()
 				continue
-			} else {
-				//fmt.Println("Succes sending worldview")
 			}
 
 			//turning off write delay after write session is finished
@@ -369,6 +387,8 @@ func Send_world_view() {
 }
 
 func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
+	// This trys sending a new worldview package to a spesific elevator
+
 	//find correct conn
 	// Because we use a matrix with listen as rwos and cols as dail we need a general program that find the conn
 	// when the code dose not know if it has dailed or are listening to a spesific id before checking.
