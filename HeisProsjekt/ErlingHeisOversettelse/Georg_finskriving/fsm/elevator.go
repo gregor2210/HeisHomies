@@ -10,6 +10,21 @@ import (
 const NumFloors int = 4
 const NumButtons int = 3
 
+func InitDriver() (chan elevio.ButtonEvent, chan int, chan bool, chan bool) {
+	drv_buttons := make(chan elevio.ButtonEvent)
+	drv_floors := make(chan int)
+	drv_obstr := make(chan bool)
+	drv_stop := make(chan bool)
+
+	go elevio.PollButtons(drv_buttons)
+	go elevio.PollFloorSensor(drv_floors)
+	go elevio.PollObstructionSwitch(drv_obstr)
+	go elevio.PollStopButton(drv_stop)
+
+	return drv_buttons, drv_floors, drv_obstr, drv_stop
+
+}
+
 // Converting Dirn to MotorDirection
 // For å få hvilken retning motoren fysisk skal gå basert på planlagt retning
 func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
@@ -61,10 +76,10 @@ type Elevator struct {
 func NewElevator() Elevator {
 	var elevator_setup Elevator = Elevator{
 		ID:                 0,
-		Floor:              -1,           // Uninitialized floor
-		Dirn:               D_Stop,       // Not moving
-		Behaviour:          EB_Idle,      // Idle state
-		Requests:           [4][3]bool{}, // No requests initially
+		Floor:              -1,                            // Uninitialized floor
+		Dirn:               D_Stop,                        // Not moving
+		Behaviour:          EB_Idle,                       // Idle state
+		Requests:           [NumFloors][NumButtons]bool{}, // No requests initially
 		DoorOpenDuration_s: 3.0,
 		Obstruction:        false, // Default door open duration
 	}
