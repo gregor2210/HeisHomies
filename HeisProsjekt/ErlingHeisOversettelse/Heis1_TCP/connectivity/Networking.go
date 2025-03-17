@@ -23,35 +23,42 @@ const (
 var (
 
 	// What ID will given id listen to and dial to
-	//row listens to column. column dailer til row
-
+	//row listens to column. column dailes til row
 	TCP_world_view_send_ips_matrix [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]string
 	listen_dail_conn_matrix        [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]net.Conn
 	trying_to_setup_matrix         = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
 	rescever_running_matrix        = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
-
-	//these are gonna look like the matrixes above
 
 	// Mutex for the matrixes
 	mu_world_view_send_ips_matrix sync.Mutex
 	mu_listen_dail_conn_matrix    sync.Mutex
 	mu_trying_to_setup_matrix     sync.Mutex
 	mu_rescever_running_matrix    sync.Mutex
-
-	// World view sending UDP connection setup
-	// Elevator (0-1, 1-2, 2-1), first is dialing, second is listening
 )
 
 // // World view sending TCP connection setup
 func init() { // runs when imported
 
-	//flag.IntVar(&ID, "id", ID, "Spesefy the id with -id")
-	//flag.Parse()
+	// If USE_UPS is true it will setup the ips with spesfied ips
+	if USE_IPS {
+		if NR_OF_ELEVATORS > len(IPs) {
+			log.Fatal("NR_OF_ELEVATORS larger then amount of IPs")
+		}
 
-	for i := 0; i < NR_OF_ELEVATORS-1; i++ {
-		for j := i + 1; j < NR_OF_ELEVATORS; j++ {
-			ip := "localhost:80" + fmt.Sprint(i) + fmt.Sprint(j)
-			set_TCP_world_view_send_ips_matrix(i, j, ip)
+		for i := 0; i < NR_OF_ELEVATORS-1; i++ {
+			for j := i + 1; j < NR_OF_ELEVATORS; j++ {
+				ip := IPs[i] + ":80" + fmt.Sprint(i) + fmt.Sprint(j)
+				set_TCP_world_view_send_ips_matrix(i, j, ip)
+			}
+		}
+
+	} else {
+		// If USE_UPS is false it will setup the ips with localhost
+		for i := 0; i < NR_OF_ELEVATORS-1; i++ {
+			for j := i + 1; j < NR_OF_ELEVATORS; j++ {
+				ip := "localhost:80" + fmt.Sprint(i) + fmt.Sprint(j)
+				set_TCP_world_view_send_ips_matrix(i, j, ip)
+			}
 		}
 	}
 }

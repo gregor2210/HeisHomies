@@ -14,8 +14,14 @@ const (
 )
 
 func main() {
-
-	port := Port_server_id0 + connectivity.ID
+	var port int
+	if connectivity.USE_IPS {
+		//if USE_IPS true, use deafult port for elevator server
+		port = Port_server_id0 + connectivity.ID
+	} else {
+		// if USE_IPs false, use increasing port nr
+		port = Port_server_id0
+	}
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
 	elevio.Init(ip, NUMFLOORS)
