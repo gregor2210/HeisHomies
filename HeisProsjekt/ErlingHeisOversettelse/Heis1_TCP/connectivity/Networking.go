@@ -27,13 +27,13 @@ var (
 	TCP_world_view_send_ips_matrix [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]string
 	listen_dail_conn_matrix        [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]net.Conn
 	trying_to_setup_matrix         = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
-	rescever_running_matrix        = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
+	receiver_running_matrix        = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
 
 	// Mutex for the matrixes
 	mu_world_view_send_ips_matrix sync.Mutex
 	mu_listen_dail_conn_matrix    sync.Mutex
 	mu_trying_to_setup_matrix     sync.Mutex
-	mu_rescever_running_matrix    sync.Mutex
+	mu_receiver_running_matrix    sync.Mutex
 )
 
 func init() { // runs when imported
@@ -99,16 +99,16 @@ func set_trying_to_setup_matrix(i int, j int, b bool) {
 	trying_to_setup_matrix[i][j] = b
 }
 
-func get_rescever_running_matrix(i int, j int) bool {
-	mu_rescever_running_matrix.Lock()
-	defer mu_rescever_running_matrix.Unlock()
-	return rescever_running_matrix[i][j]
+func get_receiver_running_matrix(i int, j int) bool {
+	mu_receiver_running_matrix.Lock()
+	defer mu_receiver_running_matrix.Unlock()
+	return receiver_running_matrix[i][j]
 }
 
-func set_rescever_running_matrix(i int, j int, b bool) {
-	mu_rescever_running_matrix.Lock()
-	defer mu_rescever_running_matrix.Unlock()
-	rescever_running_matrix[i][j] = b
+func set_receiver_running_matrix(i int, j int, b bool) {
+	mu_receiver_running_matrix.Lock()
+	defer mu_receiver_running_matrix.Unlock()
+	receiver_running_matrix[i][j] = b
 }
 
 // Serialize the struct
@@ -141,13 +141,13 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 		//Server setup
 		for j := ID + 1; j < NR_OF_ELEVATORS; j++ {
 			//Server_conn_setup
-			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) && !get_rescever_running_matrix(ID, j) {
+			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) && !get_receiver_running_matrix(ID, j) {
 				fmt.Println("Starting up tcp_server_setup. ", ID, "listening for: ", j)
 				go tcp_server_setup(j)
 			}
 
 			//Server rescever setup
-			if IsOnline(j) && !get_rescever_running_matrix(ID, j) {
+			if IsOnline(j) && !get_receiver_running_matrix(ID, j) {
 				fmt.Println("Starting handle_receive for connected elevator")
 				go handle_receive(get_listen_dail_conn_matrix(ID, j), TCP_receive_channel, j, ID, j)
 			}
@@ -156,13 +156,13 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 		//Client setup
 		for i := 0; i < ID; i++ {
 			//Client_conn_setup
-			if !get_trying_to_setup_matrix(i, ID) && !IsOnline(i) && !get_rescever_running_matrix(i, ID) {
+			if !get_trying_to_setup_matrix(i, ID) && !IsOnline(i) && !get_receiver_running_matrix(i, ID) {
 				fmt.Println("Starting up tcp_client_setup. ", ID, "dialing to: ", i)
 				go tcp_client_setup(i)
 			}
 
 			//Client rescever setup
-			if IsOnline(i) && !get_rescever_running_matrix(i, ID) {
+			if IsOnline(i) && !get_receiver_running_matrix(i, ID) {
 				fmt.Println("Starting handle_receive for elevator we are connected to")
 				go handle_receive(get_listen_dail_conn_matrix(i, ID), TCP_receive_channel, i, i, ID)
 			}
@@ -242,7 +242,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 	// 4. Decerialize and send worldview package to TCP_receive_channel
 
 	defer conn.Close()
-	set_rescever_running_matrix(i, j, true)
+	set_receiver_running_matrix(i, j, true)
 
 	fmt.Println("HANDLE RECEIVE STARTED, ID: " + fmt.Sprint(ID_of_connected_elevator))
 	for {
@@ -253,7 +253,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		if err != nil {
 			fmt.Println("Conn not open")
 			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
-			set_rescever_running_matrix(i, j, false)
+			set_receiver_running_matrix(i, j, false)
 			return
 		}
 
@@ -263,7 +263,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		if err != nil {
 			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
 			fmt.Println("failed to read packetLength:", err)
-			set_rescever_running_matrix(i, j, false)
+			set_receiver_running_matrix(i, j, false)
 			return
 		}
 
@@ -273,7 +273,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		if err != nil {
 			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
 			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
-			set_rescever_running_matrix(i, j, false)
+			set_receiver_running_matrix(i, j, false)
 			return
 		}
 
