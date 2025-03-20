@@ -2,7 +2,7 @@ package connectivity
 
 import "Driver-go/elevio"
 
-func Start_backup_prosess(dead_elevator_id int) {
+func Start_backup_process(dead_elevator_id int) {
 	dead_worldview := Get_worldview(dead_elevator_id)
 
 	//extract current requests.

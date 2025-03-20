@@ -83,7 +83,7 @@ func PrintElevator(elevator Elevator) {
 }
 
 // Function to set the obstruction status of the elevator
-func SetObsructionStatus(status bool) {
+func SetObstructionStatus(status bool) {
 	elevator.Obstruction = status
 }
 

@@ -25,8 +25,8 @@ func PrintOrderRequest(orders []OrderRequests) {
 }
 
 func Calculate_priority_value(button_event elevio.ButtonEvent, e fsm.Elevator) int {
-	// Calulating the priority value.
-	// Larger value == wants the order more
+	// Calculating the priority value.
+	// Larger value == higher order priority.
 	request_floor := button_event.Floor
 
 	NumFloors_minus_1 := fsm.NumFloors - 1
@@ -39,40 +39,40 @@ func Calculate_priority_value(button_event elevio.ButtonEvent, e fsm.Elevator) i
 	sub_val := int(math.Abs(float64(delta_floor))) * 10
 	//if elevator dosen ot have a moving dirn
 	if int(e.Dirn) == 0 {
-		// Heis har ingen ordre
+		// Elevator ha no order
 		//-
 
 	} else if delta_floor < 0 && int(e.Dirn) < 0 {
-		// Heis beveger seg NED mot knapp
+		// Elevator moves down toward the button, down
 
 		if button_event.Button == elevio.BT_HallDown {
-			// Knapp peker samme vei som heis, NED
+			// Button moves in the same direction as the elevator: down
 			//-
 
 		} else {
-			// knap peker motsatt vei av heis, OPP
+			//  Button points in the opposite direction of the elevator: up
 			sub_val += button_event.Floor * 2 * 10
 
 		}
 
 	} else if delta_floor > 0 && int(e.Dirn) < 0 {
-		// Heis beveger seg NED vekk fra knapp
+		// Elevator moves down, away from the button
 		sub_val += 2 * e.Floor * 10
 
 		if button_event.Button == elevio.BT_HallUp {
-			// Knapp peker opp
+			// Button points up
 			//-
 		} else {
-			// knapp peker ned
+			// Button points down
 			sub_val += (NumFloors_minus_1 - button_event.Floor) * 2 * 10
 
 		}
 
 	} else if delta_floor > 0 && int(e.Dirn) > 0 {
-		// heis beveger seg opp mot knapp
+		// Elevator moves up toward the button, up
 
 		if button_event.Button == elevio.BT_HallUp {
-			// knap peker samme vei OPP
+			// Button points in the same direction: up
 			//-
 
 		} else {
@@ -80,28 +80,27 @@ func Calculate_priority_value(button_event elevio.ButtonEvent, e fsm.Elevator) i
 			sub_val += (NumFloors_minus_1 - button_event.Floor) * 2 * 10
 		}
 	} else if delta_floor < 0 && int(e.Dirn) > 0 {
-		//Heis beveger seg OPP vekk fra knapp
+		// Elevator moves up, away from the button
 		sub_val += (NumFloors_minus_1 - e.Floor) * 2 * 10
 
 		if button_event.Button == elevio.BT_HallUp {
-			// Knapp peker opp
+			// Button points up
 			sub_val += button_event.Floor * 2 * 10
 		} else {
-			// Knapp peker ned
+			// Button points down
 			//-
 		}
 	}
 
 	priority_value -= sub_val
 
-	fmt.Println("Priority value:", priority_value)
-	//fmt.Println("---------------------------------------------------")
+	//fmt.Println("Priority value:", priority_value)
 	return priority_value
 }
 
 func New_order(button_event elevio.ButtonEvent) {
-	// Fugure out who should take what order.
-	// Sends the order to that elevator
+	// Figure out who should take which order.
+	// Sends the order to the selected elevator
 
 	if Dose_order_exist(button_event) {
 		fmt.Println("Order allready exist")
@@ -127,12 +126,12 @@ func New_order(button_event elevio.ButtonEvent) {
 		priorityvalue_to_sort = append(priorityvalue_to_sort, priority_value)
 	}
 
-	//Sorting priorityvalue_to_sort in decending order
+	// Sorting priorityvalue_to_sort in descending order
 	sort.Sort(sort.Reverse(sort.IntSlice(priorityvalue_to_sort)))
 
-	//Finding the elv id with highest priority value. and trying to send order to that elevator
+	// Finding the elevator ID with the highest priority value and attempting to send the order to that elevator
 	for _, priority_value := range priorityvalue_to_sort {
-		//find id or elevator that will get
+		// Find the elevator ID that will receive the order
 		id_of_elevator_that_will_get_order := ID
 		for i, v := range priority_value_id_index {
 			if v == priority_value {

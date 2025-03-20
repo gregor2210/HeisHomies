@@ -112,7 +112,7 @@ func set_rescever_running_matrix(i int, j int, b bool) {
 }
 
 // Serialize the struct
-func SerializeElevator(wv Worldview_package) ([]byte, error) {
+func serialize_elevator(wv Worldview_package) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(wv)
@@ -120,7 +120,7 @@ func SerializeElevator(wv Worldview_package) ([]byte, error) {
 }
 
 // Deserialize the incomming bytes
-func DeserializeElevator(data []byte) (Worldview_package, error) {
+func deserialize_elevator(data []byte) (Worldview_package, error) {
 	var wv Worldview_package
 	buf := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buf)
@@ -142,8 +142,8 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 		for j := ID + 1; j < NR_OF_ELEVATORS; j++ {
 			//Server_conn_setup
 			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) && !get_rescever_running_matrix(ID, j) {
-				fmt.Println("Starting up TCP_server_setup. ", ID, "listening for: ", j)
-				go TCP_server_setup(j)
+				fmt.Println("Starting up tcp_server_setup. ", ID, "listening for: ", j)
+				go tcp_server_setup(j)
 			}
 
 			//Server rescever setup
@@ -157,8 +157,8 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 		for i := 0; i < ID; i++ {
 			//Client_conn_setup
 			if !get_trying_to_setup_matrix(i, ID) && !IsOnline(i) && !get_rescever_running_matrix(i, ID) {
-				fmt.Println("Starting up TCP_client_setup. ", ID, "dialing to: ", i)
-				go TCP_client_setup(i)
+				fmt.Println("Starting up tcp_client_setup. ", ID, "dialing to: ", i)
+				go tcp_client_setup(i)
 			}
 
 			//Client rescever setup
@@ -174,7 +174,7 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 
 }
 
-func TCP_server_setup(incoming_e_ID int) {
+func tcp_server_setup(incoming_e_ID int) {
 	//Setting up server for self (ID) to listen to elevator (incoming_e_ID)
 
 	set_trying_to_setup_matrix(ID, incoming_e_ID, true)
@@ -184,13 +184,13 @@ func TCP_server_setup(incoming_e_ID int) {
 	fmt.Println("Server listening on ip: ", server_ip)
 	ln, err := net.Listen("tcp", server_ip)
 	if err != nil {
-		fmt.Println("Error in TCP_server_setup", server_ip, err)
+		fmt.Println("Error in tcp_server_setup", server_ip, err)
 	}
 
 	fmt.Println("Waiting for Accept:", server_ip)
 	conn, err := ln.Accept()
 	if err != nil {
-		fmt.Println("Error in TCP_server_setup:", server_ip, err)
+		fmt.Println("Error in tcp_server_setup:", server_ip, err)
 	}
 
 	//Set no delay til true
@@ -206,7 +206,7 @@ func TCP_server_setup(incoming_e_ID int) {
 	defer ln.Close()
 }
 
-func TCP_client_setup(e_dailing_to_ID int) {
+func tcp_client_setup(e_dailing_to_ID int) {
 	// Setting up client for self (ID) to dail a server (e_dailing_to_ID)
 
 	set_trying_to_setup_matrix(e_dailing_to_ID, ID, true)
@@ -278,7 +278,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		}
 
 		//deserialize the buffer to worldview package
-		receved_world_view_package, err := DeserializeElevator(buffer)
+		receved_world_view_package, err := deserialize_elevator(buffer)
 		if err != nil {
 			log.Fatal("failed to deserialize:", err)
 		}
@@ -297,7 +297,7 @@ func Send_world_view() {
 	// Second to all elevators that we are connected to as clients
 
 	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
-	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
+	serialized_world_view_package, err := serialize_elevator(send_world_view_package)
 	if err != nil {
 		log.Fatal("failed to serialize:", err)
 	}
@@ -411,7 +411,7 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 	send_world_view_package.Order_bool = true
 	send_world_view_package.Order = order
 
-	serialized_world_view_package, err := SerializeElevator(send_world_view_package)
+	serialized_world_view_package, err := serialize_elevator(send_world_view_package)
 	if err != nil {
 		log.Fatal("failed to serialize:", err)
 	}

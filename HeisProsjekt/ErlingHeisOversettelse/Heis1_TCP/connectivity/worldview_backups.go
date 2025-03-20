@@ -11,6 +11,7 @@ var (
 	world_view_backup_mutex sync.Mutex
 )
 
+// Stores worldview
 func Store_worldview(id int, worldview Worldview_package) {
 	world_view_backup_mutex.Lock()
 	defer world_view_backup_mutex.Unlock()
@@ -18,17 +19,20 @@ func Store_worldview(id int, worldview Worldview_package) {
 
 }
 
+// Returning IDs of world views
 func Get_worldview(id int) Worldview_package {
 	world_view_backup_mutex.Lock()
 	defer world_view_backup_mutex.Unlock()
 	return world_view_backup[id]
 }
 
+// Returns bool, Chcks if the order exist in the all the online elevators icluding self
 func Dose_order_exist(button_event elevio.ButtonEvent) bool {
-	// Chcks if the order exist in the all the online elevators icluding self
 	floor := button_event.Floor
 	var button int = int(button_event.Button) // 0 hallup, 1 halldown
 	id_of_online_elevators := Get_all_online_ids()
+
+	// terate through all online elevators, including itself, to check for button events
 	for _, id := range id_of_online_elevators {
 		if id == ID {
 			requests := fsm.GetElevatorStruct().Requests

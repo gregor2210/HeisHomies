@@ -22,7 +22,7 @@ To start an elevator instance, use the following command:
 
 ` go run main.go -id X  `
 
-Where `X` is the unique identifier assigned to each elevator. The ID must be an integer between `0` and `NR_OF_ELEVATORS-1`, where `NR_OF_ELEVATORS` represents the total number of elevators in the system. Ensure that no two elevators share the same ID, as this may lead to conflicts in communication and system behavior.  
+Where `X` is the unique identifier integer assigned to each elevator. The ID must be an integer between `0` and `NR_OF_ELEVATORS-1`, where `NR_OF_ELEVATORS` represents the total number of elevators in the system. Ensure that no two elevators share the same ID, as this may lead to conflicts in communication and system behavior.  
 
 Before running the program, choose what run mode you want to use.
 

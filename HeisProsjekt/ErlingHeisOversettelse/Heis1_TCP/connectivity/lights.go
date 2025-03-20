@@ -5,9 +5,14 @@ import (
 	"Driver-go/fsm"
 )
 
+// To store the last request
+// For reducing network traffic
+var last_request [fsm.NumFloors][fsm.NumButtons - 1]bool
+
+// Set the hall lights on button panel, using worldview_backups and self
 func SetAllLights() {
-	// henter alle online heiser.
-	// Lager en ny request matrise med alle knappetrykkene, så setter vi statusen på alle de
+	// Retrieves all online elevators.
+	// Creates a new request matrix with all button presses, then updates their statuses
 	var requests [fsm.NumFloors][fsm.NumButtons - 1]bool
 	online_ids := Get_all_online_ids()
 
@@ -20,7 +25,7 @@ func SetAllLights() {
 			req = Get_worldview(id).Elevator.Requests
 		}
 
-		// checking hall up and down and copy if true
+		// Checking hall up and down buttons and copying if true
 		for floor := 0; floor < fsm.NumFloors; floor++ {
 			// For nr of floors
 
@@ -38,6 +43,7 @@ func SetAllLights() {
 		}
 	}
 
+	// Printing for debugging
 	/*fmt.Println("Requests:")
 	for floor := 0; floor < fsm.NumFloors; floor++ {
 		for btn := 0; btn < fsm.NumButtons-1; btn++ {
@@ -47,9 +53,14 @@ func SetAllLights() {
 		}
 	}
 	*/
-	for floor := 0; floor < fsm.NumFloors; floor++ {
-		for btn := 0; btn < fsm.NumButtons-1; btn++ {
-			elevio.SetButtonLamp(elevio.ButtonType(btn), floor, requests[floor][btn])
+	if requests != last_request {
+		// If the requests are the same as before, there is no need to use network traffic to set the same states
+		for floor := 0; floor < fsm.NumFloors; floor++ {
+			for btn := 0; btn < fsm.NumButtons-1; btn++ {
+				elevio.SetButtonLamp(elevio.ButtonType(btn), floor, requests[floor][btn])
+			}
 		}
 	}
+
+	last_request = requests
 }
