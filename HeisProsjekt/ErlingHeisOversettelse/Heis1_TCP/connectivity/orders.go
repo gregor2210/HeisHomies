@@ -24,8 +24,18 @@ func PrintOrderRequest(orders []OrderRequests) {
 	}
 }
 
+// Calculating the priority value, return the value
 func Calculate_priority_value(button_event elevio.ButtonEvent, e fsm.Elevator) int {
-	// Calculating the priority value.
+	// This function calculates the priority value.
+	// This value indicates how much an elevator wants a request; a higher value means it wants it more.
+	// It starts with a max value and then proceeds to subtract values.
+	// It will subtract 10 for every floor it is away from the button press.
+	//
+	// It will consider the worst-case number of floors to reach the button.
+	// For example, if the elevator is on the 3rd floor and moving down to the 2nd floor, and an event occurs at the 4th floor,
+	// it will assume the worst-case scenario where it travels to the bottom floor before going up to the button.
+	// Therefore, it will subtract 10 for each floor on its way down and back up to the button.
+
 	// Larger value == higher order priority.
 	request_floor := button_event.Floor
 
