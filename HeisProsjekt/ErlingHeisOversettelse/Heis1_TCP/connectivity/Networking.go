@@ -21,13 +21,17 @@ const (
 )
 
 var (
-
-	// What ID will given id listen to and dial to
-	//row listens to column. column dailes til row
+	// Matrix of TCP IPs where rows are listeners and columns are dialers
 	TCP_world_view_send_ips_matrix [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]string
-	listen_dail_conn_matrix        [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]net.Conn
-	trying_to_setup_matrix         = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
-	receiver_running_matrix        = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
+
+	// Matrix of active TCP connections between elevators
+	listen_dail_conn_matrix [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]net.Conn
+
+	// Tracks active connection attempts between elevators
+	trying_to_setup_matrix = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
+
+	// Matrix indicating active receiver goroutines
+	receiver_running_matrix = [NR_OF_ELEVATORS - 1][NR_OF_ELEVATORS]bool{}
 
 	// Mutex for the matrixes
 	mu_world_view_send_ips_matrix sync.Mutex
@@ -37,9 +41,10 @@ var (
 )
 
 func init() { // runs when imported
-	// This function setup the TCP_world_view_send_ips_matrix
 
-	// If USE_UPS is true it will setup the ips with spesfied ips
+	// This function setup the TCP_world_view_send_ips_matrix
+	// If USE_IPS is true, use network IPs
+
 	if USE_IPS {
 		if NR_OF_ELEVATORS > len(IPs) {
 			log.Fatal("NR_OF_ELEVATORS larger then amount of IPs")
@@ -53,7 +58,8 @@ func init() { // runs when imported
 		}
 
 	} else {
-		// If USE_UPS is false it will setup the ips with localhost
+
+		// If USE_IPS is false, set IPs to localhost for local testing
 		for i := 0; i < NR_OF_ELEVATORS-1; i++ {
 			for j := i + 1; j < NR_OF_ELEVATORS; j++ {
 				ip := "localhost:80" + fmt.Sprint(i) + fmt.Sprint(j)
@@ -62,6 +68,8 @@ func init() { // runs when imported
 		}
 	}
 }
+
+// Thread-safe access functions for the connection matrices
 
 func get_TCP_world_view_send_ips_matrix(i int, j int) string {
 	mu_world_view_send_ips_matrix.Lock()
@@ -129,24 +137,24 @@ func deserialize_elevator(data []byte) (Worldview_package, error) {
 }
 
 func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
-	// WIll every 2 second loop though and try to first start different prosedyres
-	// Try to start TCP server setup to generate a connection (conn)
-	// try to start handle receve from given tcp connection
-	// try to start TCP client setup to generate a connection (conn)
-	// try to start receive from given conneciton
-	loop_timer := 2 // loop timer in seconds
+	// Every 2 seconds, attempts to:
+	// 1. Set up TCP servers and clients
+	// 2. Establish missing connections
+	// 3. Start receiver goroutines for active connections
+
+	loop_timer := 2
 
 	fmt.Println("Starting TCP receving setup")
-	for { //for loop to keep the function running
-		//Server setup
+	for {
+
+		// Server setup
 		for j := ID + 1; j < NR_OF_ELEVATORS; j++ {
-			//Server_conn_setup
 			if !get_trying_to_setup_matrix(ID, j) && !IsOnline(j) && !get_receiver_running_matrix(ID, j) {
 				fmt.Println("Starting up tcp_server_setup. ", ID, "listening for: ", j)
 				go tcp_server_setup(j)
 			}
 
-			//Server rescever setup
+			// Server receiver setup
 			if IsOnline(j) && !get_receiver_running_matrix(ID, j) {
 				fmt.Println("Starting handle_receive for connected elevator")
 				go handle_receive(get_listen_dail_conn_matrix(ID, j), TCP_receive_channel, j, ID, j)
@@ -175,7 +183,7 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 }
 
 func tcp_server_setup(incoming_e_ID int) {
-	//Setting up server for self (ID) to listen to elevator (incoming_e_ID)
+	// Setting up server for self (ID) to listen to elevator (incoming_e_ID)
 
 	set_trying_to_setup_matrix(ID, incoming_e_ID, true)
 
@@ -193,7 +201,7 @@ func tcp_server_setup(incoming_e_ID int) {
 		fmt.Println("Error in tcp_server_setup:", server_ip, err)
 	}
 
-	//Set no delay til true
+	// Set no delay to true
 
 	fmt.Println("Elevator ", incoming_e_ID, " connected to elevator ", ID, ". Setting ", incoming_e_ID, " to online")
 
@@ -207,14 +215,15 @@ func tcp_server_setup(incoming_e_ID int) {
 }
 
 func tcp_client_setup(e_dailing_to_ID int) {
-	// Setting up client for self (ID) to dail a server (e_dailing_to_ID)
+	// Setting up client for self (ID) to dial a server (e_dailing_to_ID)
 
 	set_trying_to_setup_matrix(e_dailing_to_ID, ID, true)
 
 	client_ip := get_TCP_world_view_send_ips_matrix(e_dailing_to_ID, ID)
 
-	// Will try to dail every second untill it connects.
 	for {
+
+		// Will try to dial every second until it connects.
 		fmt.Printf("Trying to dail to ip: %s\n", client_ip)
 		conn, err := net.Dial("tcp", client_ip)
 		if err != nil {
@@ -227,7 +236,7 @@ func tcp_client_setup(e_dailing_to_ID int) {
 
 		set_listen_dail_conn_matrix(e_dailing_to_ID, ID, conn)
 
-		SetElevatorOnline(e_dailing_to_ID) //setting status of connected elevator to online
+		SetElevatorOnline(e_dailing_to_ID)
 
 		break
 	}
@@ -235,11 +244,11 @@ func tcp_client_setup(e_dailing_to_ID int) {
 }
 
 func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, ID_of_connected_elevator int, i int, j int) {
-	// This functions should be run as go rutine and handles incomming messages
-	// 1. It sets a dedline for reading messages. If it dose not receive messages withing TIMEOUT seconds it will return. (close the conn)
-	// 2. Try to read the length of the next package
-	// 3. Read next packet that should be the lenght of what we just recived
-	// 4. Decerialize and send worldview package to TCP_receive_channel
+	// Runs as a goroutine to handle incoming messages:
+	// 1. Sets a read deadline. If no data is received within TIMEOUT, the connection is closed.
+	// 2. Reads the length of the incoming packet.
+	// 3. Reads the packet of the specified length.
+	// 4. Deserializes and sends the worldview package to TCP_receive_channel.
 
 	defer conn.Close()
 	set_receiver_running_matrix(i, j, true)
@@ -262,7 +271,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		err = binary.Read(conn, binary.BigEndian, &packetLength)
 		if err != nil {
 			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
-			fmt.Println("failed to read packetLength:", err)
+			fmt.Println("Failed to read packetLength:", err)
 			set_receiver_running_matrix(i, j, false)
 			return
 		}
@@ -277,13 +286,13 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 			return
 		}
 
-		//deserialize the buffer to worldview package
+		// Deserialize the buffer to worldview package
 		receved_world_view_package, err := deserialize_elevator(buffer)
 		if err != nil {
 			log.Fatal("failed to deserialize:", err)
 		}
 
-		//Store backup worldview from incomming elevator
+		// Store backup worldview from incomming elevator
 		Store_worldview(receved_world_view_package.Elevator_ID, receved_world_view_package)
 
 		TCP_receive_channel <- receved_world_view_package
@@ -292,9 +301,8 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 }
 
 func Send_world_view() {
-	// This trys sending a new worldview package to all online elevators
-	// First to all elevators that are connected to us as clients
-	// Second to all elevators that we are connected to as clients
+	// Tries to send a worldview package to all online elevators
+	// First to those connected to us (servers), then to those we are connected to (clients)
 
 	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
 	serialized_world_view_package, err := serialize_elevator(send_world_view_package)

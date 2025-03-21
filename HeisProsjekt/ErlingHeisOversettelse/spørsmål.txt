@@ -1,0 +1,13 @@
+1. I network, første linjenene i const er det bare kommentar, fjerne?
+
+2. I main, flytte connect_to_elevatorserver?
+
+3. Linje 204 i networking.go, skjønte ikke formålet? 
+
+4. Linje 258, skjønte ikke, linjene etter det, smør på flesk med både oversikt på starten av funksjonen og forklaring underveis?
+
+4. Oppdatere funksjoner til å ikke bruke _, som set_trying_to_setup_matrix, men heller som setElevatorOnline
+
+5. Oppdatere set_listen_dail_conn_matrix til dial
+
+6. Oppdatere funksjoner som bruker i og j, til å heller bruke f.eks server/klient?
