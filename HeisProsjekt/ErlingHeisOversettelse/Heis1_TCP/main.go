@@ -15,6 +15,7 @@ const (
 func main() {
 	// Connect to elevator server
 	connect_to_elevatorserver()
+	
 	// Communication with elevator server setup
 	drv_buttons, drv_floors, drv_obstr := elevio.Io_threds_setup()
 
