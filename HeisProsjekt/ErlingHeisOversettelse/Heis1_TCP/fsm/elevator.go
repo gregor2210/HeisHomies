@@ -6,12 +6,9 @@ import (
 	"time"
 )
 
-// NumFloors and NumButtons are global variables
 const NumFloors int = 4
 const NumButtons int = 3
 
-// Converting Dirn to MotorDirection
-// For å få hvilken retning motoren fysisk skal gå basert på planlagt retning
 func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
 	switch dirn {
 	case D_Up:
@@ -25,7 +22,6 @@ func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
 	}
 }
 
-// Direction type. up = 1, down = 0
 type Dirn int
 
 const (
@@ -34,7 +30,6 @@ const (
 	D_Stop Dirn = 0
 )
 
-// ElevatorBehaviour type. Idle = 0, DoorOpen = 1, Moving = 2
 type ElevatorBehaviour int
 
 const (
@@ -43,15 +38,11 @@ const (
 	EB_Moving   ElevatorBehaviour = 2
 )
 
-// Elevator struct containing floor, moving direction and requests
-// is used to keep track of the elevators state
-// is basicly a elevator object
 type Elevator struct {
-	ID        int
-	Floor     int
-	Dirn      Dirn
-	Behaviour ElevatorBehaviour
-	//Buttons in hall and cab x=floor y=button
+	ID                 int
+	Floor              int
+	Dirn               Dirn
+	Behaviour          ElevatorBehaviour
 	Requests           [NumFloors][NumButtons]bool
 	DoorOpenDuration_s float64
 	Obstruction        bool
@@ -66,7 +57,7 @@ func NewElevator() Elevator {
 		Behaviour:          EB_Idle,                       // Idle state
 		Requests:           [NumFloors][NumButtons]bool{}, // No requests initially
 		DoorOpenDuration_s: 3.0,
-		Obstruction:        false, // Default door open duration
+		Obstruction:        false,
 	}
 
 	return elevator_setup
@@ -82,7 +73,6 @@ func PrintElevator(elevator Elevator) {
 	fmt.Printf("Obstruction: %v\n", elevator.Obstruction)
 }
 
-// Function to set the obstruction status of the elevator
 func SetObstructionStatus(status bool) {
 	elevator.Obstruction = status
 }

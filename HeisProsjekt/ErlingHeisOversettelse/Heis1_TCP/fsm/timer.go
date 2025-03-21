@@ -11,22 +11,22 @@ const _pollRate = 20 * time.Millisecond
 var timerEndTime time.Time
 var timerActive bool
 
-// Function that polls the timer at a given rate. Sends a signal when the timer has timed out
+// Polls the timer and signals on timeout
 func PollTimerTimeout(receiver chan<- bool) {
 	for {
 		time.Sleep(_pollRate) // Poll rate, adjust as needed
 		if TimerTimedOut() {
-			receiver <- true // Send a signal when the timer has timed out
+			receiver <- true
 		}
 	}
 }
 
-// Returns time Now
+// Current time
 func getWallTime() time.Time {
 	return time.Now()
 }
 
-// starts a timer with a given duration
+// Starts a timer with a given duration
 func TimerStart(duration float64) {
 	fmt.Println("Timer started, for:", duration)
 	timerEndTime = getWallTime().Add(time.Duration(duration * float64(time.Second)))
@@ -38,7 +38,7 @@ func TimerStop() {
 	timerActive = false
 }
 
-// Returns bool if timer is timedout or not.
+// Returns true if timer expired and no obstruction
 func TimerTimedOut() bool {
 	return timerActive && getWallTime().After(timerEndTime) && !(elevator.Obstruction)
 }

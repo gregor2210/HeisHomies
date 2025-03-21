@@ -223,7 +223,7 @@ func tcp_client_setup(e_dailing_to_ID int) {
 
 	for {
 
-		// Will try to dial every second until it connects.
+		// Will try to dial every second until it connects
 		fmt.Printf("Trying to dail to ip: %s\n", client_ip)
 		conn, err := net.Dial("tcp", client_ip)
 		if err != nil {
@@ -261,7 +261,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		err := conn.SetReadDeadline(time.Now().Add(TIMEOUT * time.Second))
 		if err != nil {
 			fmt.Println("Conn not open")
-			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
+			SetElevatorOffline(ID_of_connected_elevator)
 			set_receiver_running_matrix(i, j, false)
 			return
 		}
@@ -270,7 +270,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		var packetLength uint32
 		err = binary.Read(conn, binary.BigEndian, &packetLength)
 		if err != nil {
-			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
+			SetElevatorOffline(ID_of_connected_elevator)
 			fmt.Println("Failed to read packetLength:", err)
 			set_receiver_running_matrix(i, j, false)
 			return
@@ -281,7 +281,7 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 		_, err = conn.Read(buffer)
 		if err != nil {
 			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
-			SetElevatorOffline(ID_of_connected_elevator) //setting status of connected elevator to offline
+			SetElevatorOffline(ID_of_connected_elevator)
 			set_receiver_running_matrix(i, j, false)
 			return
 		}
@@ -317,14 +317,14 @@ func Send_world_view() {
 	//Finding package length
 	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
 
-	// Sending to all online that are connected to us
+	// Send to elevators where we are server
 	for connected_e_ID := ID + 1; connected_e_ID < NR_OF_ELEVATORS; connected_e_ID++ {
 		if IsOnline(connected_e_ID) {
 
-			//sending first packetLength, before actual packet. Preventing packet stacking
+			// Send packet length first to avoid message stacking
 			server_conn := get_listen_dail_conn_matrix(ID, connected_e_ID)
 
-			//starting write settison for givven server conn
+			// Start write session with timeout
 			err = server_conn.SetWriteDeadline(time.Now().Add(TIMEOUT * time.Second))
 			if err != nil {
 				fmt.Println("Failed to set write deadline for server write:", err, connected_e_ID)
@@ -333,7 +333,7 @@ func Send_world_view() {
 				continue
 
 			}
-			//writing packet length
+			// Write packet length
 			err = binary.Write(server_conn, binary.BigEndian, packetLength)
 			if err != nil {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
@@ -342,7 +342,7 @@ func Send_world_view() {
 				continue
 			}
 
-			//writing acctual package
+			// Write actual package
 			_, err = server_conn.Write(serialized_world_view_package)
 			if err != nil {
 				fmt.Println("Error sending, connection lost.")
@@ -352,16 +352,17 @@ func Send_world_view() {
 				continue
 			}
 
-			//turning off write delay after write session is finished
+			// Disable write deadline after transmission
 			server_conn.SetWriteDeadline(time.Time{})
 		}
 	}
+
+	// Send to elevators where we are client
 	for connected_e_ID := 0; connected_e_ID < ID; connected_e_ID++ {
 		if IsOnline(connected_e_ID) {
-			//sending first packetLength, before actual packet. Preventing packet stacking
+
 			client_conn := get_listen_dail_conn_matrix(connected_e_ID, ID)
 
-			//starting write settison for givven client conn
 			err = client_conn.SetWriteDeadline(time.Now().Add(TIMEOUT * time.Second))
 			if err != nil {
 				fmt.Println("Failed to set write deadline for client write:", err, connected_e_ID)
@@ -370,36 +371,30 @@ func Send_world_view() {
 				continue
 			}
 
-			//writing packetlength
 			err = binary.Write(client_conn, binary.BigEndian, packetLength)
 			if err != nil {
 				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
-				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				SetElevatorOffline(connected_e_ID)
 				client_conn.Close()
 				continue
 			}
 
-			//writing acctual package
 			_, err = client_conn.Write(serialized_world_view_package)
 			if err != nil {
 				fmt.Println("Error sending, connection lost.")
-				SetElevatorOffline(connected_e_ID) //setting status of connected elevator to offline
+				SetElevatorOffline(connected_e_ID)
 				client_conn.Close()
 				continue
 			}
 
-			//turning off write delay after write session is finished
 			client_conn.SetWriteDeadline(time.Time{})
 		}
 	}
 }
 
 func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
-	// This trys sending a new worldview package to a spesific elevator
+	// Find the correct connection, regardless of whether this elevator is dialing or listening
 
-	//find correct conn
-	// Because we use a matrix with listen as rwos and cols as dail we need a general program that find the conn
-	// when the code dose not know if it has dailed or are listening to a spesific id before checking.
 	var conn net.Conn
 	if IsOnline(recever_e) {
 		if ID < (NR_OF_ELEVATORS-1) && get_listen_dail_conn_matrix(ID, recever_e) != nil {
@@ -431,8 +426,8 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 		return false
 	}
 
-	//Finding package length
-	packetLength := uint32(len(serialized_world_view_package)) //uint32 is 4 bytes
+	// Finding package length
+	packetLength := uint32(len(serialized_world_view_package)) // uint32 is 4 bytes
 
 	err = binary.Write(conn, binary.BigEndian, packetLength)
 	if err != nil {
@@ -443,7 +438,7 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 	}
 	fmt.Println("Success sending ORDER packetlength")
 
-	//writing acctual package
+	// Writing actual package
 	_, err = conn.Write(serialized_world_view_package)
 	if err != nil {
 		fmt.Println("Error sending ORDER, connection lost.  or timedout")
@@ -451,8 +446,10 @@ func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bo
 		conn.Close()
 		return false
 	}
-	//disable SetwriteDeadline
+
+	// Disable SetwriteDeadline
 	conn.SetWriteDeadline(time.Time{})
+
 	//fmt.Println("Success sending ORDER")
 
 	//everyting worked!

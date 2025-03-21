@@ -14,16 +14,15 @@ const (
 
 func main() {
 
-	// Connect to elevator server
 	connect_to_elevatorserver()
 
 	// Communication with elevator server setup
 	drv_buttons, drv_floors, drv_obstr := elevio.Io_threds_setup()
 
-	// Nettworking settup
+	// Networking setup
 	TCP_receive_channel, world_view_send_ticker, offline_update_chan := connectivity.Connectivity_setup()
 
-	// Sets up all fsm threds
+	// Sets up timer
 	timerTimeoutChan := fsm.Fsm_threds_setup()
 
 	// Makes sure network connections have time to start properly
@@ -34,69 +33,72 @@ func main() {
 
 	fmt.Println("Started!")
 
-	// Variabel for logic in forloop
-	// Keeps track of the previuse floor
+	// Stores the previous floor to detect floor changes
 	prev_floor := -1
 
 	// Logic loop for elevator and communication
 	for {
+
 		select {
-		// Can either receive a ButtonEvent, a floor (int), or an obstruction
-		case button_event := <-drv_buttons: // If a ButtonEvent {Floor, ButtonType} comes from the channel drv_buttons
-			//fmt.Println("Button event-------------------------------------------------------------------------")
+
+		// Button press event
+		case button_event := <-drv_buttons:
 			fmt.Printf("\nButton event: %+v\n", button_event)
 
+			// Starts order assignment if other elevators are online and it’s not a cab request
 			if len(connectivity.Get_all_online_ids()) != 1 && button_event.Button != elevio.BT_Cab {
 				connectivity.PrintIsOnline()
-				// This starts the process of finding the best elevator, only if there are other elevators online
-				// This will also not run if it is a cab request
-
 				connectivity.New_order(button_event)
+
 			} else {
-				// If the elevator does not see any other elevators online, do the request itself
+
+				// Handles request if no other elevators are online or it’s a cab request
 				fmt.Println("No other online elevators or a cab call. Take order")
 				fsm.Fsm_onRequestButtonPress(button_event.Floor, button_event.Button)
 			}
 
-		case floor := <-drv_floors: // If a floor (int) comes from the channel drv_floors
-			//fmt.Println("Floor event")
+		// Floor event
+		case floor := <-drv_floors:
 			fmt.Printf("Floor event: %+v\n", floor)
+
+			// If elevator arrives at a different floor
 			if floor != -1 && floor != prev_floor {
-				// If the elevator is at a floor and the floor is different from the previous floor
 				fsm.Fsm_onFloorArrival(floor)
 			}
 			prev_floor = floor
 
-		case timer_bool := <-timerTimeoutChan: // If a bool, True, comes from the channel timerTimeoutChan
+		// Door timeout after 3 seconds
+		case timer_bool := <-timerTimeoutChan:
 			if timer_bool {
 				fmt.Println("Door timeout")
 				fsm.TimerStop()
 				fsm.Fsm_onDoorTimeout()
 			}
 
-		case obstr_event_bool := <-drv_obstr: // If there is an obstruction event, BOOL
+		// If there is an obstruction event
+		case obstr_event_bool := <-drv_obstr:
 			fmt.Println("Obstruction event toggle")
 			fsm.SetObstructionStatus(obstr_event_bool)
 			fsm.TimerStart(3)
 
-		case <-world_view_send_ticker: // World view ticker happens every x milliseconds
-			// 1. Checks if lights should be turned off or on
-			// 2. Attempts to send world view
+		// World view ticker happens every 100 milliseconds
+		case <-world_view_send_ticker:
+			// Update lights and attempt to send world view
 			connectivity.SetAllLights()
 			connectivity.Send_world_view()
 
-		case received_world_view := <-TCP_receive_channel: // An incoming world view package, from other computers
-			// Storing world view
+		// Incoming worldview package from another elevator
+		case received_world_view := <-TCP_receive_channel:
 			connectivity.Store_worldview(received_world_view.Elevator_ID, received_world_view)
 
+			// If the received world view contains an order
 			if received_world_view.Order_bool {
 				fmt.Println("Order received")
 				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
 			}
 
-		case id_of_offline_elevator := <-offline_update_chan: // When an elevator goes from online to offline, this receives the now offline elevator id
-			// When the online status of an elevator goes from online to offline, we get the id and start the backup process
-			// This will ensure no lost calls
+		// If an elevator goes offline, retrieve its ID and take over its orders
+		case id_of_offline_elevator := <-offline_update_chan:
 			fmt.Println("Elevator has disconnected. Running start backup")
 			connectivity.Start_backup_process(id_of_offline_elevator)
 
