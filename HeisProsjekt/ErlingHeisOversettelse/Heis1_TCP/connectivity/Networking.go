@@ -70,7 +70,6 @@ func init() { // runs when imported
 }
 
 // Thread-safe access functions for the connection matrices
-
 func get_TCP_world_view_send_ips_matrix(i int, j int) string {
 	mu_world_view_send_ips_matrix.Lock()
 	defer mu_world_view_send_ips_matrix.Unlock()
@@ -182,8 +181,8 @@ func TCP_receving_setup(TCP_receive_channel chan Worldview_package) {
 
 }
 
+// Setting up server for self (ID) to listen to elevator (incoming_e_ID)
 func tcp_server_setup(incoming_e_ID int) {
-	// Setting up server for self (ID) to listen to elevator (incoming_e_ID)
 
 	set_trying_to_setup_matrix(ID, incoming_e_ID, true)
 
@@ -214,8 +213,8 @@ func tcp_server_setup(incoming_e_ID int) {
 	defer ln.Close()
 }
 
+// Setting up client for self (ID) to dial a server (e_dailing_to_ID)
 func tcp_client_setup(e_dailing_to_ID int) {
-	// Setting up client for self (ID) to dial a server (e_dailing_to_ID)
 
 	set_trying_to_setup_matrix(e_dailing_to_ID, ID, true)
 
@@ -303,7 +302,6 @@ func handle_receive(conn net.Conn, TCP_receive_channel chan Worldview_package, I
 func Send_world_view() {
 	// Tries to send a worldview package to all online elevators
 	// First to those connected to us (servers), then to those we are connected to (clients)
-
 	send_world_view_package := New_Worldview_package(ID, fsm.GetElevatorStruct())
 	serialized_world_view_package, err := serialize_elevator(send_world_view_package)
 	if err != nil {
@@ -394,7 +392,6 @@ func Send_world_view() {
 
 func Send_order_to_spesific_elevator(recever_e int, order elevio.ButtonEvent) bool {
 	// Find the correct connection, regardless of whether this elevator is dialing or listening
-
 	var conn net.Conn
 	if IsOnline(recever_e) {
 		if ID < (NR_OF_ELEVATORS-1) && get_listen_dail_conn_matrix(ID, recever_e) != nil {

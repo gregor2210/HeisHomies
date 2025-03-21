@@ -19,4 +19,19 @@ Main:
 
 1. Flytte connect_to_elevatorserver?
 
-2. 
+
+
+FSM:
+
+1. Linjer 27 til 31, fjerne alt av kommentert funksjon?
+
+
+
+io_threads_setup:
+
+1. stop funksjon?
+
+
+backup:
+
+1. Append kommenteringen?

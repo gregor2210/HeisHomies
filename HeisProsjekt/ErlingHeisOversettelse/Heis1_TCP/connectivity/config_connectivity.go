@@ -10,7 +10,7 @@ import (
 const (
 	NR_OF_ELEVATORS = 3
 
-	// Timeout for receiving and sending messages. If ether exside we consider connection lost.
+	// Timeout for send and receive. If exceeded, connection is lost.
 	TIMEOUT = 3 //seconds
 
 	// Worldview max package size
@@ -22,17 +22,17 @@ const (
 )
 
 var (
-	ID int //deafult 0
+	ID int //default 0
 
-	//Ips of the different computers.
-	// computer with id 0 has inex 0 in this list
+	// IPs of all elevators
 	IPs = [NR_OF_ELEVATORS]string{"10.100.23.28", "10.100.23.32", "10.100.23.29"}
 )
 
 func init() {
-	//Setting up the flags for the code
+	// Set up program flags
 	flag.IntVar(&ID, "id", 0, "Specify the id with -id")
-	//FOr debugging purpoeses
+
+	//For debugging purposes
 	go func() {
 		log.Println(http.ListenAndServe("localhost:"+strconv.Itoa(6060+ID), nil))
 	}()
