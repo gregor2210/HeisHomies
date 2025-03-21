@@ -7,31 +7,31 @@ import (
 )
 
 var (
-	world_view_backup       [NR_OF_ELEVATORS]Worldview_package
-	world_view_backup_mutex sync.Mutex
+	worldViewBackup      [NumElevators]WorldviewPackage
+	worldViewBackupMutex sync.Mutex
 )
 
-func Store_worldview(id int, worldview Worldview_package) {
-	world_view_backup_mutex.Lock()
-	defer world_view_backup_mutex.Unlock()
-	world_view_backup[id] = worldview
+func StoreWorldview(id int, worldview WorldviewPackage) {
+	worldViewBackupMutex.Lock()
+	defer worldViewBackupMutex.Unlock()
+	worldViewBackup[id] = worldview
 
 }
 
-func Get_worldview(id int) Worldview_package {
-	world_view_backup_mutex.Lock()
-	defer world_view_backup_mutex.Unlock()
-	return world_view_backup[id]
+func GetWorldView(id int) WorldviewPackage {
+	worldViewBackupMutex.Lock()
+	defer worldViewBackupMutex.Unlock()
+	return worldViewBackup[id]
 }
 
 // Returns true if the given order exists in any online elevator, including self
-func Dose_order_exist(button_event elevio.ButtonEvent) bool {
-	floor := button_event.Floor
-	var button int = int(button_event.Button) // 0 hallup, 1 halldown
-	id_of_online_elevators := Get_all_online_ids()
+func DoesOrderExist(buttonEvent elevio.ButtonEvent) bool {
+	floor := buttonEvent.Floor
+	var button int = int(buttonEvent.Button) // 0 hallup, 1 halldown
+	onlineElevatorIDs := GetAllOnlineIds()
 
 	// Iterate through all online elevators, including itself, to check for button events
-	for _, id := range id_of_online_elevators {
+	for _, id := range onlineElevatorIDs {
 		if id == ID {
 			requests := fsm.GetElevatorStruct().Requests
 			if requests[floor][button] {
@@ -39,8 +39,8 @@ func Dose_order_exist(button_event elevio.ButtonEvent) bool {
 			}
 
 		} else {
-			world_view := Get_worldview(id)
-			requests := world_view.Elevator.Requests
+			worldView := GetWorldView(id)
+			requests := worldView.Elevator.Requests
 
 			if requests[floor][button] {
 				return true

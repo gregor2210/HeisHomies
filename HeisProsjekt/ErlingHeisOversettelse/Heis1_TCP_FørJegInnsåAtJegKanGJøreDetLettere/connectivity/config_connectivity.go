@@ -3,12 +3,12 @@ package connectivity
 import "flag"
 
 const (
-	NR_OF_ELEVATORS = 3
-	// Timeout for receiving UDP messages
-	TIMEOUT = 3
+	NumElevators = 3
+	// TimeOut for receiving UDP messages
+	TimeOut = 3
 
 	// Worldview max package size
-	PACKAGE_SIZE = 1500
+	MaxPacketSize = 1500
 )
 
 var (

@@ -93,7 +93,7 @@ void proc(){
     
     while(true){
         //writeln("Time until next: ", timeUntilNext);
-        receiveTimeout( timeUntilNext,
+        receiveTimeOut( timeUntilNext,
             (EventsModified n){
             },
             (OwnerTerminated o){

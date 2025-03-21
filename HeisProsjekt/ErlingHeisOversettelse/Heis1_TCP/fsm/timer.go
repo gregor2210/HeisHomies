@@ -11,8 +11,8 @@ const _pollRate = 20 * time.Millisecond
 var timerEndTime time.Time
 var timerActive bool
 
-// Polls the timer and signals on timeout
-func PollTimerTimeout(receiver chan<- bool) {
+// Polls the timer and signals on TimeOut
+func PollTimerTimeOut(receiver chan<- bool) {
 	for {
 		time.Sleep(_pollRate) // Poll rate, adjust as needed
 		if TimerTimedOut() {

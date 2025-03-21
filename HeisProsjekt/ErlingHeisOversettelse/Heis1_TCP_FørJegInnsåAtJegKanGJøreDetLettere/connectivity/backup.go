@@ -2,19 +2,19 @@ package connectivity
 
 import "Driver-go/elevio"
 
-func Start_backup_prosess(dead_elevator_id int) {
-	dead_worldview := Get_worldview(dead_elevator_id)
+func Start_backup_prosess(deadElevID int) {
+	deadWorldView := GetWorldView(deadElevID)
 
 	//extract current requests.
 	var new_requests []elevio.ButtonEvent
-	dead_requests := dead_worldview.Elevator.Requests
-	for i, floor := range dead_requests {
+	deadRequests := deadWorldView.Elevator.Requests
+	for i, floor := range deadRequests {
 		if floor[0] {
-			var button elevio.ButtonType = elevio.BT_HallUp
+			var button elevio.ButtonType = elevio.BtnHallUp
 			new_requests = append(new_requests, elevio.ButtonEvent{Floor: i, Button: button})
 
 		} else if floor[1] {
-			var button elevio.ButtonType = elevio.BT_HallDown
+			var button elevio.ButtonType = elevio.BtnHallDown
 			new_requests = append(new_requests, elevio.ButtonEvent{Floor: i, Button: button})
 		}
 

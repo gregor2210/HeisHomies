@@ -105,15 +105,15 @@ version(Windows){
         serialParams.Parity     = NOPARITY;
         SetCommState(handle, &serialParams);
         
-        COMMTIMEOUTS serialTimeouts;
-        GetCommTimeouts(handle, &serialTimeouts);
-        serialTimeouts.ReadIntervalTimeout          = DWORD.max;
-        serialTimeouts.ReadTotalTimeoutMultiplier   = DWORD.max;
-        serialTimeouts.ReadTotalTimeoutConstant     = 100; // 100 ms to respond after trying to read from the device
-        serialTimeouts.WriteTotalTimeoutMultiplier  = 0;
-        serialTimeouts.WriteTotalTimeoutConstant    = 0;
+        COMMTimeOutS serialTimeOuts;
+        GetCommTimeOuts(handle, &serialTimeOuts);
+        serialTimeOuts.ReadIntervalTimeOut          = DWORD.max;
+        serialTimeOuts.ReadTotalTimeOutMultiplier   = DWORD.max;
+        serialTimeOuts.ReadTotalTimeOutConstant     = 100; // 100 ms to respond after trying to read from the device
+        serialTimeOuts.WriteTotalTimeOutMultiplier  = 0;
+        serialTimeOuts.WriteTotalTimeOutConstant    = 0;
         
-        SetCommTimeouts(handle, &serialTimeouts);
+        SetCommTimeOuts(handle, &serialTimeOuts);
         
         return handle;
     }

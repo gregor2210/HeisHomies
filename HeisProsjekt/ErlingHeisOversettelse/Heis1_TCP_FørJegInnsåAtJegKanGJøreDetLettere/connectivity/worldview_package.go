@@ -6,29 +6,29 @@ import (
 	"fmt"
 )
 
-type Worldview_package struct {
-	Elevator_ID    int
+type WorldviewPackage struct {
+	ElevatorID     int
 	Elevator       fsm.Elevator //refrence
 	Order_requeset []OrderRequests
 	Order_response []OrderRequests
 	Order          elevio.ButtonEvent
-	Order_bool     bool
+	OrderBool      bool
 }
 
-func New_Worldview_package(elevator_id int, elevator_ fsm.Elevator) Worldview_package {
+func NewWorldviewPackage(ElevatorID int, elevator_ fsm.Elevator) WorldviewPackage {
 	pending_orders := Get_pending_orders()
 	responses := Get_order_respons()
-	return Worldview_package{
-		Elevator_ID:    elevator_id,
+	return WorldviewPackage{
+		ElevatorID:     ElevatorID,
 		Elevator:       elevator_,
 		Order_requeset: pending_orders,
 		Order_response: responses,
-		Order_bool:     false,
+		OrderBool:      false,
 	}
 }
 
-func PrintWorldview(world_view Worldview_package) {
+func PrintWorldview(worldView WorldviewPackage) {
 	fmt.Print("WorldView")
-	fmt.Println("Elevator ID: ", world_view.Elevator_ID)
+	fmt.Println("Elevator ID: ", worldView.ElevatorID)
 
 }

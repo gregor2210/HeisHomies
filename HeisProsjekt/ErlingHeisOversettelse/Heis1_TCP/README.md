@@ -22,15 +22,15 @@ To start an elevator instance, use the following command:
 
 ` go run main.go -id X  `
 
-Where `X` is the unique identifier integer assigned to each elevator. The ID must be an integer between `0` and `NR_OF_ELEVATORS-1`, where `NR_OF_ELEVATORS` represents the total number of elevators in the system. Ensure that no two elevators share the same ID, as this may lead to conflicts in communication and system behavior.  
+Where `X` is the unique identifier integer assigned to each elevator. The ID must be an integer between `0` and `NumElevators-1`, where `NumElevators` represents the total number of elevators in the system. Ensure that no two elevators share the same ID, as this may lead to conflicts in communication and system behavior.  
 
 Before running the program, choose what run mode you want to use.
 
-- Setting `USE_IPS = false` will make the program usable on only one computer using multiple simulated elevator servers (`simElevatorServers`).
+- Setting `UseIPs = false` will make the program usable on only one computer using multiple simulated elevator servers (`simElevatorServers`).
 
-- Setting `USE_IPS = true` will make the program attempt to connect to multiple computers. In this case, you must ensure that the `IPs` list is correctly set up. The list should contain the same number of IP addresses as `NR_OF_ELEVATORS`. The computer assigned ID `0` should have its IP address at index `0` in `IPs`, ID `1` at index `1`, and so on.
+- Setting `UseIPs = true` will make the program attempt to connect to multiple computers. In this case, you must ensure that the `IPs` list is correctly set up. The list should contain the same number of IP addresses as `NumElevators`. The computer assigned ID `0` should have its IP address at index `0` in `IPs`, ID `1` at index `1`, and so on.
 
-You can change the `TIMEOUT` value if you want the program to be more or less aggressive in handling connection timeouts and packet loss scenarios.
+You can change the `TimeOut` value if you want the program to be more or less aggressive in handling connection TimeOuts and packet loss scenarios.
 
 
 ### The Code

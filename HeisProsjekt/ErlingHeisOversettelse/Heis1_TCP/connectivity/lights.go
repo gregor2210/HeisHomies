@@ -7,22 +7,22 @@ import (
 
 // To store the last request
 // For reducing network traffic
-var last_request [fsm.NumFloors][fsm.NumButtons - 1]bool
+var lastRequest [fsm.NumFloors][fsm.NumButtons - 1]bool
 
 // Set the hall lights on button panel, using worldview_backups and self
 func SetAllLights() {
 	// Retrieves all online elevators.
 	// Creates a new request matrix with all button presses, then updates their statuses
 	var requests [fsm.NumFloors][fsm.NumButtons - 1]bool
-	online_ids := Get_all_online_ids()
+	onlineIDs := GetAllOnlineIds()
 
-	for _, id := range online_ids {
+	for _, id := range onlineIDs {
 		var req [fsm.NumFloors][fsm.NumButtons]bool // deafult false
 
 		if id == ID {
 			req = fsm.GetElevatorStruct().Requests
 		} else {
-			req = Get_worldview(id).Elevator.Requests
+			req = GetWorldView(id).Elevator.Requests
 		}
 
 		// Checking hall up and down buttons and copying if true
@@ -53,7 +53,7 @@ func SetAllLights() {
 		}
 	}
 	*/
-	if requests != last_request {
+	if requests != lastRequest {
 		// If the requests are the same as before, there is no need to use network traffic to set the same states
 		for floor := 0; floor < fsm.NumFloors; floor++ {
 			for btn := 0; btn < fsm.NumButtons-1; btn++ {
@@ -62,5 +62,5 @@ func SetAllLights() {
 		}
 	}
 
-	last_request = requests
+	lastRequest = requests
 }

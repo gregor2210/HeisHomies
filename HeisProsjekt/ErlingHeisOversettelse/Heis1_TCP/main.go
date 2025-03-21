@@ -9,32 +9,32 @@ import (
 )
 
 const (
-	Port_server_id0 = 15657
+	PortServerID0 = 15657
 )
 
 func main() {
 
-	connect_to_elevatorserver()
+	connectToElevatorserver()
 
 	// Communication with elevator server setup
-	drv_buttons, drv_floors, drv_obstr := elevio.Io_threds_setup()
+	drvButtons, drvFloors, drvObstr := elevio.InitIOHandling()
 
 	// Networking setup
-	TCP_receive_channel, world_view_send_ticker, offline_update_chan := connectivity.Connectivity_setup()
+	tcpReceiveChannel, worldViewSendTicker, offlineUpdateChan := connectivity.ConnectivitySetup()
 
 	// Sets up timer
-	timerTimeoutChan := fsm.Fsm_threds_setup()
+	timerTimeOutChan := fsm.FsmThreadsSetup()
 
 	// Makes sure network connections have time to start properly
 	time.Sleep(2000 * time.Millisecond)
 
 	// Sets elevator to valid start possition
-	fsm.SetElevatorToValidStartPossition()
+	fsm.SetElevatorToValidStartPosition()
 
 	fmt.Println("Started!")
 
 	// Stores the previous floor to detect floor changes
-	prev_floor := -1
+	prevFloor := -1
 
 	// Logic loop for elevator and communication
 	for {
@@ -42,65 +42,65 @@ func main() {
 		select {
 
 		// Button press event
-		case button_event := <-drv_buttons:
-			fmt.Printf("\nButton event: %+v\n", button_event)
+		case buttonEvent := <-drvButtons:
+			fmt.Printf("\nButton event: %+v\n", buttonEvent)
 
 			// Starts order assignment if other elevators are online and it’s not a cab request
-			if len(connectivity.Get_all_online_ids()) != 1 && button_event.Button != elevio.BT_Cab {
+			if len(connectivity.GetAllOnlineIds()) != 1 && buttonEvent.Button != elevio.BtnCab {
 				connectivity.PrintIsOnline()
-				connectivity.New_order(button_event)
+				connectivity.NewOrder(buttonEvent)
 
 			} else {
 
 				// Handles request if no other elevators are online or it’s a cab request
 				fmt.Println("No other online elevators or a cab call. Take order")
-				fsm.Fsm_onRequestButtonPress(button_event.Floor, button_event.Button)
+				fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button)
 			}
 
 		// Floor event
-		case floor := <-drv_floors:
+		case floor := <-drvFloors:
 			fmt.Printf("Floor event: %+v\n", floor)
 
 			// If elevator arrives at a different floor
-			if floor != -1 && floor != prev_floor {
-				fsm.Fsm_onFloorArrival(floor)
+			if floor != -1 && floor != prevFloor {
+				fsm.FsmOnFloorArrival(floor)
 			}
-			prev_floor = floor
+			prevFloor = floor
 
-		// Door timeout after 3 seconds
-		case timer_bool := <-timerTimeoutChan:
-			if timer_bool {
-				fmt.Println("Door timeout")
+		// Door TimeOut after 3 seconds
+		case timerBool := <-timerTimeOutChan:
+			if timerBool {
+				fmt.Println("Door TimeOut")
 				fsm.TimerStop()
-				fsm.Fsm_onDoorTimeout()
+				fsm.FsmOnDoorTimeOut()
 			}
 
 		// If there is an obstruction event
-		case obstr_event_bool := <-drv_obstr:
+		case obstrEventBool := <-drvObstr:
 			fmt.Println("Obstruction event toggle")
-			fsm.SetObstructionStatus(obstr_event_bool)
+			fsm.SetObstructionStatus(obstrEventBool)
 			fsm.TimerStart(3)
 
 		// World view ticker happens every 100 milliseconds
-		case <-world_view_send_ticker:
+		case <-worldViewSendTicker:
 			// Update lights and attempt to send world view
 			connectivity.SetAllLights()
-			connectivity.Send_world_view()
+			connectivity.SendWorldView()
 
 		// Incoming worldview package from another elevator
-		case received_world_view := <-TCP_receive_channel:
-			connectivity.Store_worldview(received_world_view.Elevator_ID, received_world_view)
+		case receivedWorldView := <-tcpReceiveChannel:
+			connectivity.StoreWorldview(receivedWorldView.ElevatorID, receivedWorldView)
 
 			// If the received world view contains an order
-			if received_world_view.Order_bool {
+			if receivedWorldView.OrderBool {
 				fmt.Println("Order received")
-				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
+				fsm.FsmOnRequestButtonPress(receivedWorldView.Order.Floor, receivedWorldView.Order.Button)
 			}
 
 		// If an elevator goes offline, retrieve its ID and take over its orders
-		case id_of_offline_elevator := <-offline_update_chan:
+		case idOfflineElevator := <-offlineUpdateChan:
 			fmt.Println("Elevator has disconnected. Running start backup")
-			connectivity.Start_backup_process(id_of_offline_elevator)
+			connectivity.StartBackupProcess(idOfflineElevator)
 
 		}
 
@@ -108,17 +108,17 @@ func main() {
 
 }
 
-func connect_to_elevatorserver() {
+func connectToElevatorserver() {
 	// Setting up connection with elevator server
 
 	var port int
-	if connectivity.USE_IPS {
-		//if USE_IPS true, use deafult port for elevator server
-		port = Port_server_id0
+	if connectivity.UseIPs {
+		//if UseIPs true, use deafult port for elevator server
+		port = PortServerID0
 
 	} else {
-		// if USE_IPs false, use increasing port nr
-		port = Port_server_id0 + connectivity.ID
+		// if UseIPs false, use increasing port nr
+		port = PortServerID0 + connectivity.ID
 	}
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)

@@ -14,14 +14,14 @@ const NumButtons int = 3
 // For å få hvilken retning motoren fysisk skal gå basert på planlagt retning
 func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
 	switch dirn {
-	case D_Up:
-		return elevio.MD_Up
-	case D_Down:
-		return elevio.MD_Down
-	case D_Stop:
-		return elevio.MD_Stop
+	case DirUp:
+		return elevio.MotorUp
+	case DirDown:
+		return elevio.MotorDown
+	case DirStop:
+		return elevio.MotorStop
 	default:
-		return elevio.MD_Stop
+		return elevio.MotorStop
 	}
 }
 
@@ -29,18 +29,18 @@ func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
 type Dirn int
 
 const (
-	D_Up   Dirn = 1
-	D_Down Dirn = -1
-	D_Stop Dirn = 0
+	DirUp   Dirn = 1
+	DirDown Dirn = -1
+	DirStop Dirn = 0
 )
 
 // ElevatorBehaviour type. Idle = 0, DoorOpen = 1, Moving = 2
 type ElevatorBehaviour int
 
 const (
-	EB_Idle     ElevatorBehaviour = 0
-	EB_DoorOpen ElevatorBehaviour = 1
-	EB_Moving   ElevatorBehaviour = 2
+	ElevIdle     ElevatorBehaviour = 0
+	ElevDoorOpen ElevatorBehaviour = 1
+	ElevMoving   ElevatorBehaviour = 2
 )
 
 // Elevator struct containing floor, moving direction and requests
@@ -59,17 +59,17 @@ type Elevator struct {
 
 // Elevator initializer function
 func NewElevator() Elevator {
-	var elevator_setup Elevator = Elevator{
+	var elevatorSetup Elevator = Elevator{
 		ID:                 0,
 		Floor:              -1,           // Uninitialized floor
-		Dirn:               D_Stop,       // Not moving
-		Behaviour:          EB_Idle,      // Idle state
+		Dirn:               DirStop,      // Not moving
+		Behaviour:          ElevIdle,     // Idle state
 		Requests:           [4][3]bool{}, // No requests initially
 		DoorOpenDuration_s: 3.0,
 		Obstruction:        false, // Default door open duration
 	}
 
-	return elevator_setup
+	return elevatorSetup
 }
 
 func PrintElevator(elevator Elevator) {
@@ -87,13 +87,13 @@ func SetObsructionStatus(status bool) {
 	elevator.Obstruction = status
 }
 
-func SetElevatorToValidStartPossition() {
+func SetElevatorToValidStartPosition() {
 	fmt.Println("Elevator initialized")
 	for {
 		if elevio.GetFloor() == -1 {
-			elevio.SetMotorDirection(elevio.MD_Down)
+			elevio.SetMotorDirection(elevio.MotorDown)
 		} else {
-			elevio.SetMotorDirection(elevio.MD_Stop)
+			elevio.SetMotorDirection(elevio.MotorStop)
 			break
 		}
 		time.Sleep(_pollRate)

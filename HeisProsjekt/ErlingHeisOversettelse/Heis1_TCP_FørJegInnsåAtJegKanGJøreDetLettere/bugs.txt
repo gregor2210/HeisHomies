@@ -24,9 +24,9 @@ wait for respond loop finished!
 panic: runtime error: index out of range [2] with length 2
 
 goroutine 1 [running]:
-Driver-go/connectivity.get_listen_dail_conn_matrix(0xf6ff78?, 0xc000090038?)
+Driver-go/connectivity.getListenDialConnMatrix(0xf6ff78?, 0xc000090038?)
         C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/connectivity/Networking.go:74 +0xfb
-Driver-go/connectivity.Send_order_to_spesific_elevator(0x1, {0xc000090038?, 0xc000203ab8?})
+Driver-go/connectivity.SendOrderToSpecificElevator(0x1, {0xc000090038?, 0xc000203ab8?})
         C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/connectivity/Networking.go:334 +0xa5
 Driver-go/connectivity.SendOrderToSpesificElevator({{0x28, 0x3c, 0x32}, {0xc0000152e0, 0x3, 0x4}, {0x3, 0x1}})       
         C:/Users/erlin/OneDrive/aa NTNU/6sem/Sanntid/oving/Git heislab/HeisHomies/HeisProsjekt/ErlingHeisOversettelse/Heis1_TCP/connectivity/orders.go:191 +0x11f

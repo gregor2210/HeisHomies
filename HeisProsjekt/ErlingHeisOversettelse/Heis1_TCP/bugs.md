@@ -1,6 +1,6 @@
 ### PAKKE TAP BUGS
-1) Fungere fint ved 25% pakketap. 50% faller egt alle heiser ut. MULIG vi kan redigere timeout tiden? Men vi må nokk rote med TCP instillinger
-- Har gjort at den ikke kan prøve lenger en TIMEOUT er satt til. noe mer vi kan gjøre?
+1) Fungere fint ved 25% pakketap. 50% faller egt alle heiser ut. MULIG vi kan redigere TimeOut tiden? Men vi må nokk rote med TCP instillinger
+- Har gjort at den ikke kan prøve lenger en TimeOut er satt til. noe mer vi kan gjøre?
 
 9) Ved høyt pakketap kan vi fort ende med at alle heisene er på men ikke klarer å komunisere med hverandre. Skal de ta ikke ta imot ordere? fordi det er ikke sikkert at det finnes en backup?
 
@@ -32,7 +32,7 @@ Setting ElevatorID: 1 to ONLINE!
 2025/03/10 11:33:55 Elevator 1 is online
 2025/03/10 11:33:55 Elevator 2 is online
 Returning from SetElevatorOnline
-Starting handle_receive for elevator we are connected to
+Starting handleReceive for elevator we are connected to
 HANDLE RECEIVE STARTED, ID: 1
 Error sending, connection lost.
 ^Csignal: interrupt
@@ -40,7 +40,7 @@ Error sending, connection lost.
 8) TROR LØST??? Sett heis til start poss må resette lampe
 
 2) Ved mye packetloss så begynner TCP og bruke lenger tid på å retrye hvis den feiler flere ganger på rad. Ved høyt pakketap står den på DAIL veldig lenge.
-- `Tror løst`. Den vil timeout etter hvor lang TIMEOUT er .
+- `Tror løst`. Den vil TimeOut etter hvor lang TimeOut er .
 
 10) `LØST` legge til i lights at request sjekker om den er ulik forigje gang den sjekket. Slik at vi ikke sender unødvendig mange melinger til heis server?
 

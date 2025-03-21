@@ -8,16 +8,16 @@ Networking:
 
 5. Linje 453 og resten, fjerne?
 
-4. Oppdatere funksjoner til å ikke bruke _, som set_trying_to_setup_matrix, men heller som setElevatorOnline
+4. Oppdatere funksjoner til å ikke bruke _, som setTryingToSetupMatrix, men heller som setElevatorOnline
 
-5. Oppdatere set_listen_dail_conn_matrix til dial
+5. Oppdatere setListenDialConnMatrix til dial
 
 6. Oppdatere funksjoner som bruker i og j, til å heller bruke f.eks server/klient?
 
 
 Main:
 
-1. Flytte connect_to_elevatorserver?
+1. Flytte connectToElevatorserver?
 
 
 

@@ -5,19 +5,19 @@ import (
 )
 
 var (
-	world_view_backup       [NR_OF_ELEVATORS]Worldview_package
-	world_view_backup_mutex sync.Mutex
+	worldViewBackup      [NumElevators]WorldviewPackage
+	worldViewBackupMutex sync.Mutex
 )
 
-func Store_worldview(id int, worldview Worldview_package) {
-	world_view_backup_mutex.Lock()
-	defer world_view_backup_mutex.Unlock()
-	world_view_backup[id] = worldview
+func StoreWorldview(id int, worldview WorldviewPackage) {
+	worldViewBackupMutex.Lock()
+	defer worldViewBackupMutex.Unlock()
+	worldViewBackup[id] = worldview
 
 }
 
-func Get_worldview(id int) Worldview_package {
-	world_view_backup_mutex.Lock()
-	defer world_view_backup_mutex.Unlock()
-	return world_view_backup[id]
+func GetWorldView(id int) WorldviewPackage {
+	worldViewBackupMutex.Lock()
+	defer worldViewBackupMutex.Unlock()
+	return worldViewBackup[id]
 }
