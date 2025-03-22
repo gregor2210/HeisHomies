@@ -36,10 +36,10 @@ class Resource(T) {
     T allocate(int priority){
         mtx.wait();  // Lås muteksen
         if (busy) {  
-            numWaiting[priority]++;  // 🔥 Registrer at vi venter før vi slipper muteksen
+            numWaiting[priority]++;  // Registrer at vi venter før vi slipper muteksen
             mtx.notify();  // Slipp muteksen slik at andre tråder kan kjøre
-            sems[priority].wait();  // ⏳ Vent på tur i riktig kø
-            numWaiting[priority]--;  // 🛠 Når vi våkner, fjern oss fra ventelisten
+            sems[priority].wait();  // Vent på tur i riktig kø
+            numWaiting[priority]--;  // Når vi våkner, fjern oss fra ventelisten
         }
         busy = true;  // Nå er ressursen opptatt
         mtx.notify();  // Slipp muteksen slik at andre kan sjekke status
@@ -52,11 +52,11 @@ class Resource(T) {
         value = v;  // Lagre verdien
 
         if (numWaiting[1] > 0) {  
-            sems[1].notify();  // 🎉 Vekk en VIP hvis noen venter
+            sems[1].notify();  //  Vekk en VIP hvis noen venter
         } else if (numWaiting[0] > 0) {  
-            sems[0].notify();  // 🎉 Vekk en vanlig gjest hvis ingen VIP-er venter
+            sems[0].notify();  //  Vekk en vanlig gjest hvis ingen VIP-er venter
         } else {  
-            mtx.notify();  // 🏁 Ingen venter, slipp muteksen
+            mtx.notify();  //  Ingen venter, slipp muteksen
         }
     }
 }

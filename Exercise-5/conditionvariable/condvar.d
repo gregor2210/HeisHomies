@@ -32,6 +32,7 @@ class Resource(T) {
         Mutex               mtx;
         Condition           cond;
         PriorityQueue!int   queue;
+        bool                busy = false;
     }
     
     this(){
@@ -39,12 +40,35 @@ class Resource(T) {
         cond    = new Condition(mtx);
     }
     
-    T allocate(int id, int priority){
+    T allocate(int id, int priority) {
+        mtx.lock();
+
+        // Sett deg i prioritetskøa
+        queue.insert(id, priority);
+
+        // Vent til du er fremst og klubben er ledig
+        while (queue.front() != id || busy) {
+            cond.wait();
+        }
+
+        // Du er fremst og klubben er ledig
+        busy = true;
+        queue.popFront();
+
+        mtx.unlock();
         return value;
     }
-    
-    void deallocate(T v){
+
+    void deallocate(T v) {
+        mtx.lock();
+
+        busy = false;
         value = v;
+
+        // Noen andre kan kanskje komme inn
+        cond.notifyAll();
+
+        mtx.unlock();
     }
 }
 
