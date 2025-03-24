@@ -1,9 +1,11 @@
 package fsm
 
 // Channel to receive timer TimeOut events
-func FsmThreadsSetup() chan bool {
+func FsmThreadsSetup() (chan bool, chan bool) {
 	timerTimeOutChan := make(chan bool)
+	motorErrorChan = make(chan bool)
+
 	go PollTimerTimeOut(timerTimeOutChan)
 
-	return timerTimeOutChan
+	return timerTimeOutChan, motorErrorChan
 }

@@ -24,10 +24,8 @@ const (
 var (
 	ID int //default 0
 
-	//Ips of the different computers.
-	// computer with id 0 has inex 0 in this list
-	IPs = [NR_OF_ELEVATORS]string{"10.100.23.28", "10.100.23.32", "10.100.23.29"}
-	// IPs of all elevators
+	// IPs of the different computers.
+	// Computer with id 0 has inex 0 in this list
 	IPs = [NumElevators]string{"10.100.23.28", "10.100.23.32", "10.100.23.29"}
 )
 

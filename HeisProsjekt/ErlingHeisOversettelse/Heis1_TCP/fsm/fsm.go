@@ -24,12 +24,6 @@ func setAllLights(elevator Elevator) {
 	}
 }
 
-// func fsm_onInitBetweenFloors() {
-// 	elevio.SetMotorDirection(elevio.MotorDown)
-// 	elevator.dirn = elevio.MotorDown
-// 	elevator.behaviour = ElevMoving
-// }
-
 func FsmOnRequestButtonPress(btnFloor int, btnType elevio.ButtonType) {
 	elevatorMutex.Lock()
 	defer elevatorMutex.Unlock()
@@ -60,6 +54,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType elevio.ButtonType) {
 
 		case ElevMoving:
 			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.Dirn))
+			StartMotorErrorTimer(elevator)
 
 		case ElevIdle:
 		}
@@ -81,6 +76,7 @@ func FsmOnFloorArrival(newFloor int) {
 		// Stop if request in direction, cab call, or no more requests
 		if requestsShouldStop(elevator) {
 			elevio.SetMotorDirection(elevio.MotorStop)
+			StopMotorErrorTimer()
 			elevio.SetDoorOpenLamp(true)
 			elevator = requestsClearAtCurrentFloor(elevator)
 			TimerStart(elevator.DoorOpenDuration_s)
@@ -115,6 +111,7 @@ func FsmOnDoorTimeOut() {
 		case ElevMoving:
 			elevio.SetDoorOpenLamp(false)
 			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.Dirn))
+			StartMotorErrorTimer(elevator)
 
 		case ElevIdle:
 			elevio.SetDoorOpenLamp(false)

@@ -14,12 +14,6 @@ import (
 	"time"
 )
 
-const (
-//Device ID, to make it use right ports and ip. For easyer development
-//starts at 0
-
-)
-
 var (
 	// Matrix of TCP IPs where rows are listeners and columns are dialers
 	tcpWorldViewSendIPMatrix [NumElevators - 1][NumElevators]string
@@ -50,72 +44,72 @@ func init() { // runs when imported
 			log.Fatal("NumElevators larger then amount of IPs")
 		}
 
-		for i := 0; i < NumElevators-1; i++ {
-			for j := i + 1; j < NumElevators; j++ {
-				ip := IPs[i] + ":80" + fmt.Sprint(i) + fmt.Sprint(j)
-				setTcpWorldViewSendIPMatrix(i, j, ip)
+		for server := 0; server < NumElevators-1; server++ {
+			for client := server + 1; client < NumElevators; client++ {
+				ip := IPs[server] + ":80" + fmt.Sprint(server) + fmt.Sprint(client)
+				setTcpWorldViewSendIPMatrix(server, client, ip)
 			}
 		}
 
 	} else {
 
 		// If UseIPs is false, set IPs to localhost for local testing
-		for i := 0; i < NumElevators-1; i++ {
-			for j := i + 1; j < NumElevators; j++ {
-				ip := "localhost:80" + fmt.Sprint(i) + fmt.Sprint(j)
-				setTcpWorldViewSendIPMatrix(i, j, ip)
+		for server := 0; server < NumElevators-1; server++ {
+			for client := server + 1; client < NumElevators; client++ {
+				ip := "localhost:80" + fmt.Sprint(server) + fmt.Sprint(client)
+				setTcpWorldViewSendIPMatrix(server, client, ip)
 			}
 		}
 	}
 }
 
 // Thread-safe access functions for the connection matrices
-func getTcpWorldViewSendIPMatrix(i int, j int) string {
+func getTcpWorldViewSendIPMatrix(server int, client int) string {
 	muWorldViewSendIPMatrix.Lock()
 	defer muWorldViewSendIPMatrix.Unlock()
-	return tcpWorldViewSendIPMatrix[i][j]
+	return tcpWorldViewSendIPMatrix[server][client]
 }
 
-func setTcpWorldViewSendIPMatrix(i int, j int, ip string) {
+func setTcpWorldViewSendIPMatrix(server int, client int, ip string) {
 	muWorldViewSendIPMatrix.Lock()
 	defer muWorldViewSendIPMatrix.Unlock()
-	tcpWorldViewSendIPMatrix[i][j] = ip
+	tcpWorldViewSendIPMatrix[server][client] = ip
 }
 
-func getListenDialConnMatrix(i int, j int) net.Conn {
+func getListenDialConnMatrix(server int, client int) net.Conn {
 	muListenDialConnMatrix.Lock()
 	defer muListenDialConnMatrix.Unlock()
-	return listenDialConnMatrix[i][j]
+	return listenDialConnMatrix[server][client]
 }
 
-func setListenDialConnMatrix(i int, j int, conn net.Conn) {
+func setListenDialConnMatrix(server int, client int, conn net.Conn) {
 	muListenDialConnMatrix.Lock()
 	defer muListenDialConnMatrix.Unlock()
-	listenDialConnMatrix[i][j] = conn
+	listenDialConnMatrix[server][client] = conn
 }
 
-func getTryingToSetupMatrix(i int, j int) bool {
+func getTryingToSetupMatrix(server int, client int) bool {
 	muTryingToSetupMatrix.Lock()
 	defer muTryingToSetupMatrix.Unlock()
-	return tryingToSetupMatrix[i][j]
+	return tryingToSetupMatrix[server][client]
 }
 
-func setTryingToSetupMatrix(i int, j int, b bool) {
+func setTryingToSetupMatrix(server int, client int, b bool) {
 	muTryingToSetupMatrix.Lock()
 	defer muTryingToSetupMatrix.Unlock()
-	tryingToSetupMatrix[i][j] = b
+	tryingToSetupMatrix[server][client] = b
 }
 
-func getReceiverRunningMatrix(i int, j int) bool {
+func getReceiverRunningMatrix(server int, client int) bool {
 	muReceiverRunningMatrix.Lock()
 	defer muReceiverRunningMatrix.Unlock()
-	return receiverRunningMatrix[i][j]
+	return receiverRunningMatrix[server][client]
 }
 
-func setReceiverRunningMatrix(i int, j int, b bool) {
+func setReceiverRunningMatrix(server int, client int, b bool) {
 	muReceiverRunningMatrix.Lock()
 	defer muReceiverRunningMatrix.Unlock()
-	receiverRunningMatrix[i][j] = b
+	receiverRunningMatrix[server][client] = b
 }
 
 // Serialize the struct
@@ -147,31 +141,31 @@ func TcpReceivingSetup(tcpReceiveChannel chan WorldviewPackage) {
 	for {
 
 		// Server setup
-		for j := ID + 1; j < NumElevators; j++ {
-			if !getTryingToSetupMatrix(ID, j) && !IsOnline(j) && !getReceiverRunningMatrix(ID, j) {
-				fmt.Println("Starting up tcpServerSetup. ", ID, "listening for: ", j)
-				go tcpServerSetup(j)
+		for client := ID + 1; client < NumElevators; client++ {
+			if !getTryingToSetupMatrix(ID, client) && !IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
+				fmt.Println("Starting up tcpServerSetup. ", ID, "listening for: ", client)
+				go tcpServerSetup(client)
 			}
 
 			// Server receiver setup
-			if IsOnline(j) && !getReceiverRunningMatrix(ID, j) {
+			if IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
 				fmt.Println("Starting handleReceive for connected elevator")
-				go handleReceive(getListenDialConnMatrix(ID, j), tcpReceiveChannel, j, ID, j)
+				go handleReceive(getListenDialConnMatrix(ID, client), tcpReceiveChannel, client, ID, client)
 			}
 		}
 
 		//Client setup
-		for i := 0; i < ID; i++ {
+		for server := 0; server < ID; server++ {
 			//Client connection setup
-			if !getTryingToSetupMatrix(i, ID) && !IsOnline(i) && !getReceiverRunningMatrix(i, ID) {
-				fmt.Println("Starting up tcpClientSetup. ", ID, "dialing to: ", i)
-				go tcpClientSetup(i)
+			if !getTryingToSetupMatrix(server, ID) && !IsOnline(server) && !getReceiverRunningMatrix(server, ID) {
+				fmt.Println("Starting up tcpClientSetup. ", ID, "dialing to: ", server)
+				go tcpClientSetup(server)
 			}
 
 			//Client rescever setup
-			if IsOnline(i) && !getReceiverRunningMatrix(i, ID) {
+			if IsOnline(server) && !getReceiverRunningMatrix(server, ID) {
 				fmt.Println("Starting handleReceive for elevator we are connected to")
-				go handleReceive(getListenDialConnMatrix(i, ID), tcpReceiveChannel, i, i, ID)
+				go handleReceive(getListenDialConnMatrix(server, ID), tcpReceiveChannel, server, server, ID)
 			}
 
 		}
@@ -199,8 +193,6 @@ func tcpServerSetup(incomingElevID int) {
 	if err != nil {
 		fmt.Println("Error in tcpServerSetup:", serverIP, err)
 	}
-
-	// Set no delay to true
 
 	fmt.Println("Elevator ", incomingElevID, " connected to elevator ", ID, ". Setting ", incomingElevID, " to online")
 
@@ -242,7 +234,7 @@ func tcpClientSetup(elevDialingToID int) {
 	setTryingToSetupMatrix(elevDialingToID, ID, false)
 }
 
-func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, connectedElevatorID int, i int, j int) {
+func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, connectedElevatorID int, server int, client int) {
 	// Runs as a goroutine to handle incoming messages:
 	// 1. Sets a read deadline. If no data is received within TimeOut, the connection is closed.
 	// 2. Reads the length of the incoming packet.
@@ -250,7 +242,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 	// 4. Deserializes and sends the worldview package to tcpReceiveChannel.
 
 	defer conn.Close()
-	setReceiverRunningMatrix(i, j, true)
+	setReceiverRunningMatrix(server, client, true)
 
 	fmt.Println("HANDLE RECEIVE STARTED, ID: " + fmt.Sprint(connectedElevatorID))
 	for {
@@ -261,7 +253,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 		if err != nil {
 			fmt.Println("Conn not open")
 			SetElevatorOffline(connectedElevatorID)
-			setReceiverRunningMatrix(i, j, false)
+			setReceiverRunningMatrix(server, client, false)
 			return
 		}
 
@@ -271,7 +263,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 		if err != nil {
 			SetElevatorOffline(connectedElevatorID)
 			fmt.Println("Failed to read packetLength:", err)
-			setReceiverRunningMatrix(i, j, false)
+			setReceiverRunningMatrix(server, client, false)
 			return
 		}
 
@@ -281,7 +273,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 		if err != nil {
 			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
 			SetElevatorOffline(connectedElevatorID)
-			setReceiverRunningMatrix(i, j, false)
+			setReceiverRunningMatrix(server, client, false)
 			return
 		}
 
@@ -447,8 +439,5 @@ func SendOrderToSpecificElevator(receiverElev int, order elevio.ButtonEvent) boo
 	// Disable SetwriteDeadline
 	conn.SetWriteDeadline(time.Time{})
 
-	//fmt.Println("Success sending ORDER")
-
-	//everyting worked!
 	return true
 }

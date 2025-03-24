@@ -1,17 +1,27 @@
 package connectivity
 
-import "Driver-go/elevio"
+import (
+	"Driver-go/elevio"
+	"Driver-go/fsm"
+	"fmt"
+)
 
+// Start backupprosess for dead elevator
 func StartBackupProcess(deadElevID int) {
-	deadWorldView := GetWorldView(deadElevID)
+	fmt.Println("Starting backup prosess")
+	var deadRequests [fsm.NumFloors][fsm.NumButtons]bool
+	if deadElevID == ID {
+		deadRequests = fsm.GetElevatorStruct().Requests
+	} else {
+		deadWorldView := GetWorldView(deadElevID)
+		// Extract requests from dead elevator
+		deadRequests = deadWorldView.Elevator.Requests
 
-	// Extract requests from dead elevator
-	deadRequests := deadWorldView.Elevator.Requests
+	}
 	for i, floor := range deadRequests {
 		if floor[0] {
 			var button elevio.ButtonType = elevio.BtnHallUp
 			request := elevio.ButtonEvent{Floor: i, Button: button}
-			//new_requests = append(new_requests, elevio.ButtonEvent{Floor: i, Button: button})
 			NewOrder(request)
 
 		}
@@ -19,8 +29,6 @@ func StartBackupProcess(deadElevID int) {
 			var button elevio.ButtonType = elevio.BtnHallDown
 			request := elevio.ButtonEvent{Floor: i, Button: button}
 			NewOrder(request)
-
-			//new_requests = append(new_requests, elevio.ButtonEvent{Floor: i, Button: button})
 		}
 
 	}

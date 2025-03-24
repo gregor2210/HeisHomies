@@ -23,7 +23,7 @@ func main() {
 	tcpReceiveChannel, worldViewSendTicker, offlineUpdateChan := connectivity.ConnectivitySetup()
 
 	// Sets up timer
-	timerTimeOutChan := fsm.FsmThreadsSetup()
+	timerTimeOutChan, motorErrorChan := fsm.FsmThreadsSetup()
 
 	// Makes sure network connections have time to start properly
 	time.Sleep(2000 * time.Millisecond)
@@ -66,6 +66,16 @@ func main() {
 				fsm.FsmOnFloorArrival(floor)
 			}
 			prevFloor = floor
+
+		// Motor Error detected
+		case errorBool := <-motorErrorChan:
+			// There is an error with the motor
+			fmt.Println("Motor error Error")
+			// if errorBool == True and not the online elevator
+			if errorBool && !connectivity.SelfOnlyOnline() {
+				fmt.Println("Elevator has motor problems. Running start backup")
+				connectivity.StartBackupProcess(connectivity.ID)
+			}
 
 		// Door TimeOut after 3 seconds
 		case timerBool := <-timerTimeOutChan:
