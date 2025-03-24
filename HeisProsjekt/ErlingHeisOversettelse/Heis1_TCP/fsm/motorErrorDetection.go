@@ -16,13 +16,14 @@ var (
 )
 
 // Polls the timer and signals on TimeOut
-func MotorTimerTimeOut(receiver chan<- bool) {
+func PollMotorTimerTimeOut(receiver chan<- bool) {
 	for {
 		time.Sleep(_motorPullRate) // Poll rate, adjust as needed
 		if MotorTimerTimedOut() {
 			//
 			fmt.Println("Motor error timer time out")
 			motorErrorChan <- true
+			motorTimerActive = false
 		}
 	}
 }
@@ -32,7 +33,7 @@ func StartMotorErrorTimer(elv Elevator) {
 	if elv.Behaviour != elevio.MotorStop {
 		var duration float64 = 10 // 10sec
 		fmt.Println("Motor timer started, for:", duration)
-		motorTimerEndTime = getWallTime().Add(time.Duration(duration * float64(time.Second)))
+		motorTimerEndTime = time.Now().Add(time.Duration(duration * float64(time.Second)))
 		motorTimerActive = true
 	}
 
@@ -46,5 +47,5 @@ func StopMotorErrorTimer() {
 
 // Returns true if timer expired and no obstruction
 func MotorTimerTimedOut() bool {
-	return motorTimerActive && getWallTime().After(motorTimerEndTime)
+	return motorTimerActive && time.Now().After(motorTimerEndTime)
 }

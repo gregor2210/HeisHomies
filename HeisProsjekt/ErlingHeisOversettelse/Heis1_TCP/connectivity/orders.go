@@ -108,11 +108,11 @@ func CalculatePriorityValue(buttonEvent elevio.ButtonEvent, e fsm.Elevator) int 
 	return priorityValue
 }
 
-func NewOrder(buttonEvent elevio.ButtonEvent) {
+func NewOrder(buttonEvent elevio.ButtonEvent, includeSelf bool) {
 	// Figure out who should take which order.
 	// Sends the order to the selected elevator
 
-	if DoesOrderExist(buttonEvent) {
+	if includeSelf && DoesOrderExist(buttonEvent) {
 		fmt.Println("Order allready exist")
 		return
 	}
@@ -139,6 +139,7 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 	// Sorting priorityValueToSort in descending order
 	sort.Sort(sort.Reverse(sort.IntSlice(priorityValueToSort)))
 
+	didOrderGetSent := false
 	// Finding the elevator ID with the highest priority value and attempting to send the order to that elevator
 	for _, priorityValue := range priorityValueToSort {
 		// Find the elevator ID that will receive the order
@@ -150,17 +151,22 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 			}
 		}
 
-		if idOfElevatorThatWillGetOrder == ID {
+		if idOfElevatorThatWillGetOrder == ID && includeSelf {
 			//Send reqeust to self
 			fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button) // Ikke så fint at dnne er her
+			didOrderGetSent = true
 			break
 
 		} else if SendOrderToSpecificElevator(idOfElevatorThatWillGetOrder, buttonEvent) {
 			//Try to send order to elevator with id
 			fmt.Println("ID: ", idOfElevatorThatWillGetOrder, "Got the order!")
+			didOrderGetSent = true
 			break
 		}
 
+	}
+	if !didOrderGetSent {
+		fmt.Println("No elevator could take the order")
 	}
 
 }

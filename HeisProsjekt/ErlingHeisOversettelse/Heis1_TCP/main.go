@@ -48,7 +48,7 @@ func main() {
 			// Starts order assignment if other elevators are online and it’s not a cab request
 			if len(connectivity.GetAllOnlineIds()) != 1 && buttonEvent.Button != elevio.BtnCab {
 				connectivity.PrintIsOnline()
-				connectivity.NewOrder(buttonEvent)
+				connectivity.NewOrder(buttonEvent, true)
 
 			} else {
 
@@ -74,7 +74,7 @@ func main() {
 			// if errorBool == True and not the online elevator
 			if errorBool && !connectivity.SelfOnlyOnline() {
 				fmt.Println("Elevator has motor problems. Running start backup")
-				connectivity.StartBackupProcess(connectivity.ID)
+				connectivity.StartMotorErrorBackupProcess()
 			}
 
 		// Door TimeOut after 3 seconds

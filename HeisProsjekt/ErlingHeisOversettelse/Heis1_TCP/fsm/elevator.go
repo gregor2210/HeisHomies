@@ -89,4 +89,5 @@ func SetElevatorToValidStartPosition() {
 		time.Sleep(_pollRate)
 
 	}
+	setAllLights(elevator)
 }

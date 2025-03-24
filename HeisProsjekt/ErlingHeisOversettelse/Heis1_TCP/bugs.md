@@ -16,6 +16,11 @@
 1) legg til Readme fil, gjør den bedre
 2) Noen filer har ikke så mye komentering. Forekempel noe av orversatt heiskode. Legg til mer komentarer
 
+###
+bugs med motor dc
+Lys skrur seg ikke av når den har gitt bort ordre og noen andre har gjort de.
+Ny ordre mens motoren er av gies fortsatt til heisen med ødelagt motor.
+
 
 
 --------------------------- Tror løst-----------------------------------------
