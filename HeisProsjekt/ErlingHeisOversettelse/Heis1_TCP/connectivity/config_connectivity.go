@@ -26,7 +26,7 @@ var (
 
 	//Ips of the different computers.
 	// computer with id 0 has inex 0 in this list
-	IPs = [NR_OF_ELEVATORS]string{"10.100.23.82", "10.100.23.32", "10.100.23.29"}
+	IPs = [NR_OF_ELEVATORS]string{"10.100.23.28", "10.100.23.32", "10.100.23.29"}
 )
 
 func init() {

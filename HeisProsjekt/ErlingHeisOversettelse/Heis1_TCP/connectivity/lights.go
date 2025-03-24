@@ -39,7 +39,7 @@ func SetAllLights() {
 		}
 	}
 
-	fmt.Println("Requests:")
+	//fmt.Println("Requests:")
 	for floor := 0; floor < fsm.NumFloors; floor++ {
 		for btn := 0; btn < fsm.NumButtons-1; btn++ {
 			if requests[floor][btn] {
