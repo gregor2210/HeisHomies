@@ -149,11 +149,9 @@ func TcpReceivingSetup(tcpReceiveChannel chan WorldviewPackage) {
 
 	loopTimer := 2
 
-	fmt.Println("Starting TCP receving setup")
 	for {
 
 		if IsSelfOnline() {
-			fmt.Println("TCP receving setup")
 			// Server setup
 			for client := ID + 1; client < NumElevators; client++ {
 				if !getTryingToSetupMatrix(ID, client) && !IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
@@ -231,10 +229,10 @@ func tcpClientSetup(elevDialingToID int) {
 
 		// Will try to dial every second until it connects
 		fmt.Printf("Trying to dail to ip: %s\n", clientIP)
-		conn, err := net.Dial("tcp", clientIP)
+		conn, err := net.DialTimeout("tcp", clientIP, 2*time.Second) // Timeout after 2s
 		if err != nil {
-			fmt.Println("Dailing id ", elevDialingToID, "failed, retrying in 2 seconds...")
-			time.Sleep(1 * time.Second)
+			fmt.Println("Dailing id ", elevDialingToID, "failed, retrying in 1/2 seconds...")
+			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 

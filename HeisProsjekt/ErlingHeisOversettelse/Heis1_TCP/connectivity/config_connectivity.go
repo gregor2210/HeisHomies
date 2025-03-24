@@ -18,7 +18,7 @@ const (
 
 	// UseIPs is set to true if you are gonna use different computer.
 	// Remember to set correct ips in IPs
-	UseIPs = true
+	UseIPs = false
 )
 
 var (

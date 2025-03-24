@@ -17,7 +17,7 @@ var (
 
 func init() {
 	isOnline[ID] = true
-	offlineUpdateChan = make(chan int)
+	offlineUpdateChan = make(chan int, 10)
 }
 
 func OnlineSetup(offlineUpdateChan_ chan int) {
@@ -61,18 +61,16 @@ func SetElevatorOnline(elevatorID int) {
 	} else {
 		log.Fatal("Not valid elevatorID when SetElevatorOnline()", elevatorID)
 	}
-	fmt.Println("Returning from SetElevatorOnline")
+
 }
 
 func SetElevatorOffline(elevatorID int) {
-	fmt.Println("Inside SetElevatorOffline")
 	isOnlineMutex.Lock()
 	defer isOnlineMutex.Unlock()
 
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 		// Only print if the elevator was previously online and is now set to offline
 		if isOnline[elevatorID] {
-			fmt.Println("Before setting offline")
 			isOnline[elevatorID] = false
 			offlineUpdateChan <- elevatorID
 
@@ -89,7 +87,6 @@ func SetElevatorOffline(elevatorID int) {
 	} else {
 		log.Fatal("Not valid elevatorID when SetElevatorOffline():", elevatorID)
 	}
-	fmt.Println("Returning from SetElevatorOffline")
 }
 
 func IsSelfOnline() bool {
@@ -110,8 +107,8 @@ func IsOnline(elevatorID int) bool {
 	return false
 }
 
+// Print the online status of all elevators
 func PrintIsOnline() {
-
 	isOnlineMutex.Lock()
 	defer isOnlineMutex.Unlock()
 	for i, online := range isOnline {
@@ -123,6 +120,7 @@ func PrintIsOnline() {
 	}
 }
 
+// Return true if self is the only online elevator
 func SelfOnlyOnline() bool {
 	isOnlineMutex.Lock()
 	defer isOnlineMutex.Unlock()
