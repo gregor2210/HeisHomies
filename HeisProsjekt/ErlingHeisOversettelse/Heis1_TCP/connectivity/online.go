@@ -65,12 +65,14 @@ func SetElevatorOnline(elevatorID int) {
 }
 
 func SetElevatorOffline(elevatorID int) {
+	fmt.Println("Inside SetElevatorOffline")
 	isOnlineMutex.Lock()
 	defer isOnlineMutex.Unlock()
 
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 		// Only print if the elevator was previously online and is now set to offline
 		if isOnline[elevatorID] {
+			fmt.Println("Before setting offline")
 			isOnline[elevatorID] = false
 			offlineUpdateChan <- elevatorID
 
