@@ -3,32 +3,32 @@ package masterSlave
 import "log"
 
 var (
-	world_view_elv_1 Worldview_package
-	world_view_elv_2 Worldview_package
-	world_view_elv_3 Worldview_package
+	worldView_elv_1 WorldviewPackage
+	worldView_elv_2 WorldviewPackage
+	worldView_elv_3 WorldviewPackage
 )
 
-func Store_worldview(ID int, worldview Worldview_package) {
+func StoreWorldview(ID int, worldview WorldviewPackage) {
 	switch ID {
 	case 1:
-		world_view_elv_1 = worldview
+		worldView_elv_1 = worldview
 	case 2:
-		world_view_elv_2 = worldview
+		worldView_elv_2 = worldview
 	case 3:
-		world_view_elv_3 = worldview
+		worldView_elv_3 = worldview
 	}
 
 }
 
-func Get_worldview(ID int) Worldview_package {
+func GetWorldView(ID int) WorldviewPackage {
 	switch ID {
 	case 1:
-		return world_view_elv_1
+		return worldView_elv_1
 	case 2:
-		return world_view_elv_2
+		return worldView_elv_2
 	case 3:
-		return world_view_elv_3
+		return worldView_elv_3
 	}
-	log.Fatalf("Error Get_worldview: Invalid ID%v", ID)
-	return Worldview_package{}
+	log.Fatalf("Error GetWorldView: Invalid ID%v", ID)
+	return WorldviewPackage{}
 }

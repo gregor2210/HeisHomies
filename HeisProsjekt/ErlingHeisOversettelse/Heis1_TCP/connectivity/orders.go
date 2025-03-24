@@ -9,151 +9,155 @@ import (
 )
 
 type OrderRequests struct {
-	Original_elevator               int
-	Responder_elevator              int
-	Unique_ID                       string
-	Button_event                    elevio.ButtonEvent
-	Elevator_priority_value_respond int
+	OriginalElevator             int
+	ResponderElevator            int
+	UniqueID                     string
+	ButtonEvent                  elevio.ButtonEvent
+	ElevatorPriorityValueRespond int
 }
 
 func PrintOrderRequest(orders []OrderRequests) {
 	fmt.Println("Pending Orders:")
 	for _, order := range orders {
 		fmt.Printf("Original Elevator: %d, Responder Elevator: %d, Time: %s, Priority: %d\n",
-			order.Original_elevator, order.Responder_elevator, order.Unique_ID, order.Elevator_priority_value_respond)
+			order.OriginalElevator, order.ResponderElevator, order.UniqueID, order.ElevatorPriorityValueRespond)
 	}
 }
 
-func Calculate_priority_value(button_event elevio.ButtonEvent, elevator fsm.Elevator) int {
-	request_floor := button_event.Floor
-	//request_button := button_event.Button
+// Calculating the priority value, return the value
+func CalculatePriorityValue(buttonEvent elevio.ButtonEvent, e fsm.Elevator) int {
+	// This function calculates the priority value.
+	// This value indicates how much an elevator wants a request; a higher value means it wants it more.
+	// It starts with a max value and then proceeds to subtract values.
+	// It will subtract 10 for every floor it is away from the button press.
+	//
+	// It will consider the worst-case number of floors to reach the button.
+	// For example, if the elevator is on the 3rd floor and moving down to the 2nd floor, and an event occurs at the 4th floor,
+	// it will assume the worst-case scenario where it travels to the bottom floor before going up to the button.
+	// Therefore, it will subtract 10 for each floor on its way down and back up to the button.
 
-	//button point dir. minus is down
-	//requst_button_point_dir := -1
-	//if int(request_button) == 0 {
-	//requst_button_point_dir = 1
-	//}
-	//elevator := GetElevatorStruct()
-	NumFloors_minus_1 := fsm.NumFloors - 1
+	// Larger value == higher order priority.
+	requestFloor := buttonEvent.Floor
+
+	NumFloorsMinus1 := fsm.NumFloors - 1
 	//Calculate how much this elevator wants this request.
-	priority_value := 2 * 10 * NumFloors_minus_1 // max value
+	priorityValue := 2 * 10 * NumFloorsMinus1 // max value
 
 	//DÅRLIG VERSJON, TAR ABSOLUTT AVSTAND
-	delta_floor := request_floor - elevator.Floor
-	//fmt.Println("---------------------------------------------------")
-	//fmt.Println("request floor: ", request_floor)
-	//fmt.Println("elevator floor: ", elevator.Floor)
-	//fmt.Println("Delta floor: ", delta_floor)
-	//fmt.Println("Priority value :", priority_value)
+	deltaFloor := requestFloor - e.Floor
 
-	priority_value = priority_value - int(math.Abs(float64(delta_floor)))*10
+	subVal := int(math.Abs(float64(deltaFloor))) * 10
+	//if elevator dosen ot have a moving dirn
+	if int(e.Dirn) == 0 {
+		// Elevator ha no order
+		//-
 
-	//FUGERTE IKKE HELT
-	/*
-		//antall etasjer unna gir -10 poeng
-		//delta_floor gir minus value if requested floor is below
-		delta_floor := request_floor - elevator.Floor
+	} else if deltaFloor < 0 && int(e.Dirn) < 0 {
+		// Elevator moves down toward the button, down
 
-		//if elevator dosen ot have a moving dirn
-		if int(elevator.Dirn) == 0 {
-			priority_value = priority_value - int(math.Abs(float64(delta_floor)))*10
-
-			//HVis heis beveger seg mot request, og request peker i samme retning som heisens bevegelse
-		} else if math.Copysign(1, float64(delta_floor)) == math.Copysign(1, float64(elevator.Dirn)) {
-			// delta_floor have the same sign as elv direction. Meaning it is going towards the request)
-
-			if math.Copysign(1, float64(requst_button_point_dir)) == math.Copysign(1, float64(elevator.Dirn)) {
-				//Elevator moves towards request and in same direction as request
-				priority_value = priority_value - int(math.Abs(float64(priority_value)-float64(delta_floor)))*10
-
-			} else {
-				//Elevator moves toward request, but request is in oposit riection
-				if int(elevator.Dirn) < 0 {
-					//elevator moves downward
-					wortcase_down := elevator.Floor + request_floor //goes to bottom, and turns direciton and moves up
-					priority_value = priority_value - wortcase_down*10
-				} else {
-					//elevator moves up
-					worstcase_up := (NumFloors_minus_1 - elevator.Floor) + (NumFloors_minus_1 - request_floor)
-					priority_value = priority_value - worstcase_up*10
-				}
-			}
+		if buttonEvent.Button == elevio.BtnHallDown {
+			// Button moves in the same direction as the elevator: down
+			//-
 
 		} else {
-			// Elevator is not going towards the request
+			//  Button points in the opposite direction of the elevator: up
+			subVal += buttonEvent.Floor * 2 * 10
 
-			if math.Copysign(1, float64(requst_button_point_dir)) == math.Copysign(1, float64(elevator.Dirn)) {
-				//Elevator will not point in same drection after turn at a worstcase top
+		}
 
-			} else {
-				//Elevator moves toward request, but request is in oposit riection
-				if int(elevator.Dirn) < 0 {
-					//elevator moves downward
-					nr_of_floors_traveled := elevator.Floor + NumFloors_minus_1 + request_floor
-					priority_value = priority_value - nr_of_floors_traveled*10
-				} else {
-					//elevator moves up
-					nr_of_floors_traveled := (NumFloors_minus_1 - elevator.Floor) + NumFloors_minus_1 + request_floor
-					priority_value = priority_value - nr_of_floors_traveled*10
+	} else if deltaFloor > 0 && int(e.Dirn) < 0 {
+		// Elevator moves down, away from the button
+		subVal += 2 * e.Floor * 10
 
-				}
-			}
+		if buttonEvent.Button == elevio.BtnHallUp {
+			// Button points up
+			//-
+		} else {
+			// Button points down
+			subVal += (NumFloorsMinus1 - buttonEvent.Floor) * 2 * 10
 
-		}*/
-	fmt.Println("Priority value:", priority_value)
-	//fmt.Println("---------------------------------------------------")
-	return priority_value
+		}
+
+	} else if deltaFloor > 0 && int(e.Dirn) > 0 {
+		// Elevator moves up toward the button, up
+
+		if buttonEvent.Button == elevio.BtnHallUp {
+			// Button points in the same direction: up
+			//-
+
+		} else {
+			// Knapp peker motsatt vei NED
+			subVal += (NumFloorsMinus1 - buttonEvent.Floor) * 2 * 10
+		}
+	} else if deltaFloor < 0 && int(e.Dirn) > 0 {
+		// Elevator moves up, away from the button
+		subVal += (NumFloorsMinus1 - e.Floor) * 2 * 10
+
+		if buttonEvent.Button == elevio.BtnHallUp {
+			// Button points up
+			subVal += buttonEvent.Floor * 2 * 10
+		} else {
+			// Button points down
+			//-
+		}
+	}
+
+	priorityValue -= subVal
+
+	//fmt.Println("Priority value:", priorityValue)
+	return priorityValue
 }
 
-func New_order(button_event elevio.ButtonEvent) {
-	fmt.Println("New Order")
+func NewOrder(buttonEvent elevio.ButtonEvent) {
+	// Figure out who should take which order.
+	// Sends the order to the selected elevator
 
-	if Dose_order_exist(button_event) {
+	if DoesOrderExist(buttonEvent) {
 		fmt.Println("Order allready exist")
 		return
 	}
 
-	var priority_value_id_index [NR_OF_ELEVATORS]int
-	var priorityvalue_to_sort []int
-	online_elevator_id := Get_all_online_ids()
-	for _, id := range online_elevator_id {
+	var priorityValueIDIndex [NumElevators]int
+	var priorityValueToSort []int
+	onlineElevatorID := GetAllOnlineIds()
+	for _, id := range onlineElevatorID {
 		//Gets list of all priority values
 		var elevator fsm.Elevator
 		if id == ID {
 			elevator = fsm.GetElevatorStruct()
 
 		} else {
-			elevator = Get_worldview(id).Elevator
+			elevator = GetWorldView(id).Elevator
 
 		}
 
-		priority_value := Calculate_priority_value(button_event, elevator)
-		priority_value_id_index[id] = priority_value
-		priorityvalue_to_sort = append(priorityvalue_to_sort, priority_value)
+		priorityValue := CalculatePriorityValue(buttonEvent, elevator)
+		priorityValueIDIndex[id] = priorityValue
+		priorityValueToSort = append(priorityValueToSort, priorityValue)
 	}
 
-	//Sorting priorityvalue_to_sort in decending order
-	sort.Sort(sort.Reverse(sort.IntSlice(priorityvalue_to_sort)))
+	// Sorting priorityValueToSort in descending order
+	sort.Sort(sort.Reverse(sort.IntSlice(priorityValueToSort)))
 
-	//Finding the elv id with highest priority value. and trying to send order to that elevator
-	for _, priority_value := range priorityvalue_to_sort {
-		//find id or elevator that will get
-		id_of_elevator_that_will_get_order := ID
-		for i, v := range priority_value_id_index {
-			if v == priority_value {
-				id_of_elevator_that_will_get_order = i
+	// Finding the elevator ID with the highest priority value and attempting to send the order to that elevator
+	for _, priorityValue := range priorityValueToSort {
+		// Find the elevator ID that will receive the order
+		idOfElevatorThatWillGetOrder := ID
+		for i, v := range priorityValueIDIndex {
+			if v == priorityValue {
+				idOfElevatorThatWillGetOrder = i
 				break
 			}
 		}
 
-		if id_of_elevator_that_will_get_order == ID {
+		if idOfElevatorThatWillGetOrder == ID {
 			//Send reqeust to self
-			fsm.Fsm_onRequestButtonPress(button_event.Floor, button_event.Button) // Ikke så fint at dnne er her
+			fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button) // Ikke så fint at dnne er her
 			break
 
-		} else if Send_order_to_spesific_elevator(id_of_elevator_that_will_get_order, button_event) {
+		} else if SendOrderToSpecificElevator(idOfElevatorThatWillGetOrder, buttonEvent) {
 			//Try to send order to elevator with id
-			fmt.Println("ID: ", id_of_elevator_that_will_get_order, "Got the order!")
+			fmt.Println("ID: ", idOfElevatorThatWillGetOrder, "Got the order!")
 			break
 		}
 

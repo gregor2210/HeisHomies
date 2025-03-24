@@ -9,33 +9,33 @@ import (
 )
 
 const (
-	NUMFLOORS       = 4
-	Port_server_id0 = 15657
+	NUMFLOORS     = 4
+	PortServerID0 = 15657
 )
 
 func main() {
 
-	port := Port_server_id0 + connectivity.ID
+	port := PortServerID0 + connectivity.ID
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
 	elevio.Init(ip, NUMFLOORS)
 
-	//var d elevio.MotorDirection = elevio.MD_Up
+	//var d elevio.MotorDirection = elevio.MotorUp
 	//elevio.SetMotorDirection(d)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	//connectivity.TCP_setup()
-	TCP_receive_channel := make(chan connectivity.Worldview_package)
-	//TCP_send_channel_listen := make(chan connectivity.Worldview_package)
-	//TCP_send_channel_dail := make(chan connectivity.Worldview_package)
-	go connectivity.TCP_receving_setup(TCP_receive_channel)
+	tcpReceiveChannel := make(chan connectivity.WorldviewPackage)
+	//TCP_send_channel_listen := make(chan connectivity.WorldviewPackage)
+	//TCP_send_channel_dail := make(chan connectivity.WorldviewPackage)
+	go connectivity.TcpReceivingSetup(tcpReceiveChannel)
 
 	// Go routine to send world view every second
-	var world_view_send_ticker <-chan time.Time
+	var worldViewSendTicker <-chan time.Time
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
-	world_view_send_ticker = ticker.C
+	worldViewSendTicker = ticker.C
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//Order setup
@@ -44,30 +44,30 @@ func main() {
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	//Online setup
-	offline_update_chan := make(chan int)
-	connectivity.Online_setup(offline_update_chan)
+	offlineUpdateChan := make(chan int)
+	connectivity.OnlineSetup(offlineUpdateChan)
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-	drv_buttons := make(chan elevio.ButtonEvent)
-	drv_floors := make(chan int)
-	drv_obstr := make(chan bool)
+	drvbuttons := make(chan elevio.ButtonEvent)
+	drvFloors := make(chan int)
+	drvObstr := make(chan bool)
 	drv_stop := make(chan bool)
 
-	// Channel to receive timer timeout events
-	timerTimeoutChan := make(chan bool)
+	// Channel to receive timer TimeOut events
+	timerTimeOutChan := make(chan bool)
 
-	go elevio.PollButtons(drv_buttons)
+	go elevio.PollButtons(drvbuttons)
 	//søker igjennom alle etasjene og sjekker alle typer knapper for den etasjen.
 	//Den sjekker ved å sende en tpc getbutton(etasje, knappetype) og får tilbake true/false. Dersom dette er anderledes enn fra forigje gang den sjekket og den nå er nå true.
-	//Skriver den til chanelen drv_buttons. Den skriver da en ButtonEvent (struct) med etasje og knappetype.
-	go elevio.PollFloorSensor(drv_floors)
-	//Sjekker om heisen er i en etasje og den etasjen er ulik det den var sist gang den sjekket. Dersom den er det, skriver den til chanelen drv_floors. Den skriver da etasjen heisen er i, i form av en int.
-	go elevio.PollObstructionSwitch(drv_obstr)
-	//Sjekker om det er en obstruction i heisen. Dersom statuesn på obstruction endrer seg så skriver den true til chanelen drv_obstr. Dersom det ikke er obstruction, skriver den false.
+	//Skriver den til chanelen drvbuttons. Den skriver da en ButtonEvent (struct) med etasje og knappetype.
+	go elevio.PollFloorSensor(drvFloors)
+	//Sjekker om heisen er i en etasje og den etasjen er ulik det den var sist gang den sjekket. Dersom den er det, skriver den til chanelen drvFloors. Den skriver da etasjen heisen er i, i form av en int.
+	go elevio.PollObstructionSwitch(drvObstr)
+	//Sjekker om det er en obstruction i heisen. Dersom statuesn på obstruction endrer seg så skriver den true til chanelen drvObstr. Dersom det ikke er obstruction, skriver den false.
 	go elevio.PollStopButton(drv_stop)
 	//Sjekker om stopknappen er trykket inn. Den vil skrive true eller false til chanelen drv_stop når statusen endrer seg.
 
-	go fsm.PollTimerTimeout(timerTimeoutChan)
+	go fsm.PollTimerTimeOut(timerTimeOutChan)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -75,90 +75,90 @@ func main() {
 	fmt.Println("Started!")
 
 	//inputPollRateMs := 25
-	prev_floor := -1
+	prevFloor := -1
 
-	fsm.SetElevatorToValidStartPossition()
+	fsm.SetElevatorToValidStartPosition()
 
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
-		case button_event := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
+		case buttonEvent := <-drvbuttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drvbuttons
 			fmt.Println("Button event-------------------------------------------------------------------------")
-			fmt.Printf("%+v\n", button_event)
+			fmt.Printf("%+v\n", buttonEvent)
 
-			if len(connectivity.Get_all_online_ids()) != 1 && button_event.Button != elevio.BT_Cab {
+			if len(connectivity.GetAllOnlineIds()) != 1 && buttonEvent.Button != elevio.BtnCab {
 				connectivity.PrintIsOnline()
 				//This is start the prosses of finding the best elevator, only if there are other elevators online
 				//This will also not run if it is a cab request
-				priority_value := fsm.Calculate_priority_value(button_event)
-				connectivity.New_order(button_event, priority_value)
+				priorityValue := fsm.CalculatePriorityValue(buttonEvent)
+				connectivity.NewOrder(buttonEvent, priorityValue)
 			} else {
 				// If elevator do not see any other elevators are online. Do the request selfe
 				fmt.Println("No other online elevators or a cab call. Take order")
-				fsm.Fsm_onRequestButtonPress(button_event.Floor, button_event.Button)
+				fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button)
 			}
 
-		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
+		case a := <-drvFloors: // Hvis det kommer en etasje (int) fra chanelen drvFloors
 			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
-			if a != -1 && a != prev_floor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
-				fsm.Fsm_onFloorArrival(a)
+			if a != -1 && a != prevFloor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
+				fsm.FsmOnFloorArrival(a)
 			}
-			prev_floor = a
+			prevFloor = a
 
-		case a := <-timerTimeoutChan: // Hvis det kommer en bool, True, fra chanelen timerTimeoutChan
+		case a := <-timerTimeOutChan: // Hvis det kommer en bool, True, fra chanelen timerTimeOutChan
 			if a {
-				fmt.Println("Door timeout")
+				fmt.Println("Door TimeOut")
 				fsm.TimerStop()
-				fsm.Fsm_onDoorTimeout()
+				fsm.FsmOnDoorTimeOut()
 			}
 
-		case a := <-drv_obstr:
+		case a := <-drvObstr:
 			fmt.Println("Obstruction event toggle")
 			fsm.SetObsructionStatus(a)
 			fsm.TimerStart(3)
 
-		case <-world_view_send_ticker:
+		case <-worldViewSendTicker:
 			//fmt.Println("Sending world view")
-			connectivity.Send_world_view()
+			connectivity.SendWorldView()
 
-			send_world_view_package := connectivity.New_Worldview_package(connectivity.ID, fsm.GetElevatorStruct())
-			connectivity.PrintOrderRequest(send_world_view_package.Order_requeset)
-			connectivity.PrintOrderRequest(send_world_view_package.Order_response)
+			SendWorldviewPackage := connectivity.NewWorldviewPackage(connectivity.ID, fsm.GetElevatorStruct())
+			connectivity.PrintOrderRequest(SendWorldviewPackage.Order_requeset)
+			connectivity.PrintOrderRequest(SendWorldviewPackage.Order_response)
 
 			//connectivity.PrintIsOnline()
 
-			//case world_view := <-TCP_receive_channel:
-			//fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
+			//case worldView := <-tcpReceiveChannel:
+			//fmt.Println("World view reseved, PC:", worldView.ElevatorID, "\n")
 			//fmt.Println("\n\n")
 			//time.Sleep(500 * time.Duration(inputPollRateMs))
 
-		case received_world_view := <-TCP_receive_channel:
-			//fmt.Println("World view reseved, PC:", received_world_view.Elevator_ID)
+		case receivedWorldView := <-tcpReceiveChannel:
+			//fmt.Println("World view reseved, PC:", receivedWorldView.ElevatorID)
 
 			//storing worldview
-			connectivity.Store_worldview(received_world_view.Elevator_ID, received_world_view)
+			connectivity.StoreWorldview(receivedWorldView.ElevatorID, receivedWorldView)
 
-			if received_world_view.Order_bool {
+			if receivedWorldView.OrderBool {
 				fmt.Println("Order receved")
-				fsm.Fsm_onRequestButtonPress(received_world_view.Order.Floor, received_world_view.Order.Button)
+				fsm.FsmOnRequestButtonPress(receivedWorldView.Order.Floor, receivedWorldView.Order.Button)
 			}
 
-			//priority_value := fsm.Calculate_priority_value(received_world_view.)
-			connectivity.Receved_order_requests(received_world_view.Order_requeset, received_world_view.Elevator_ID) //Mulig vi kan flytte denne inn i conneciton pakka
-			//fmt.Println("Receved_order_response, id: ", received_world_view.Elevator_ID)
-			connectivity.Receved_order_response(received_world_view.Order_response)
+			//priorityValue := fsm.CalculatePriorityValue(receivedWorldView.)
+			connectivity.Receved_order_requests(receivedWorldView.Order_requeset, receivedWorldView.ElevatorID) //Mulig vi kan flytte denne inn i conneciton pakka
+			//fmt.Println("Receved_order_response, id: ", receivedWorldView.ElevatorID)
+			connectivity.Receved_order_response(receivedWorldView.Order_response)
 
 		case received_order := <-order_to_send_chan:
 			if !connectivity.SendOrderToSpesificElevator(received_order) {
 				fmt.Println("Failed to send order. taking it selfe")
-				fsm.Fsm_onRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
+				fsm.FsmOnRequestButtonPress(received_order.Order.Floor, received_order.Order.Button)
 			}
 
-		case id_of_offline_elevator := <-offline_update_chan:
+		case idOfflineElevator := <-offlineUpdateChan:
 			//When online staus of a elevator goes from online to offline. We get the id and start the backup prosess
 			//THis will insure not lost calls
-			connectivity.Start_backup_prosess(id_of_offline_elevator)
+			connectivity.Start_backup_prosess(idOfflineElevator)
 
 		}
 

@@ -9,6 +9,7 @@ simulator.con
 
 --port                  15658
 
+
 --light_off             -
 --light_on              *
 

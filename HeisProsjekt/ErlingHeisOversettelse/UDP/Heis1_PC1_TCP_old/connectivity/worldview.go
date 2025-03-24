@@ -7,16 +7,16 @@ var (
 	newButtonRequestMatrix [4][2]int
 )
 
-type Worldview_package struct {
-	Elevator_ID      int
+type WorldviewPackage struct {
+	ElevatorID       int
 	cyclic_counter   int
 	Elevator         fsm.Elevator //refrence
 	NewButtonRequest [4][2]int
 }
 
-func New_Worldview_package(elevator_id int, elevator fsm.Elevator) Worldview_package {
-	return Worldview_package{
-		Elevator_ID:      elevator_id,
+func NewWorldviewPackage(ElevatorID int, elevator fsm.Elevator) WorldviewPackage {
+	return WorldviewPackage{
+		ElevatorID:       ElevatorID,
 		cyclic_counter:   cyclic_counter,
 		Elevator:         elevator,
 		NewButtonRequest: newButtonRequestMatrix,

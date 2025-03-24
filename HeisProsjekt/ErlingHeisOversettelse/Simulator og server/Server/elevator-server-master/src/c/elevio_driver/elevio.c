@@ -16,10 +16,10 @@ void elevio_init(void){
 
 
 static const uint8_t motorDrivePWM = 255;
-static const uint8_t motorStopPWM  = 0;
+static const uint8_t MotorStopPWM  = 0;
 void elevio_motorDirection(MotorDirection dirn){
     if(dirn == 0){
-        writePWM(&serialLine, PWMPORT_MOTORSPEED, motorStopPWM);
+        writePWM(&serialLine, PWMPORT_MOTORSPEED, MotorStopPWM);
     } else if(dirn > 0){
         writePort(&serialLine, PORT_MOTORDIR, 0);
         writePWM(&serialLine, PWMPORT_MOTORSPEED, motorDrivePWM);

@@ -14,93 +14,93 @@ func main() {
 
 	elevio.Init("localhost:15659", numFloors)
 
-	//var d elevio.MotorDirection = elevio.MD_Up
+	//var d elevio.MotorDirection = elevio.MotorUp
 	//elevio.SetMotorDirection(d)
 
-	drv_buttons := make(chan elevio.ButtonEvent)
-	drv_floors := make(chan int)
-	drv_obstr := make(chan bool)
+	drvbuttons := make(chan elevio.ButtonEvent)
+	drvFloors := make(chan int)
+	drvObstr := make(chan bool)
 	drv_stop := make(chan bool)
 
-	// Channel to receive timer timeout events
-	timerTimeoutChan := make(chan bool)
+	// Channel to receive timer TimeOut events
+	timerTimeOutChan := make(chan bool)
 
-	go elevio.PollButtons(drv_buttons)
+	go elevio.PollButtons(drvbuttons)
 	//søker igjennom alle etasjene og sjekker alle typer knapper for den etasjen.
 	//Den sjekker ved å sende en tpc getbutton(etasje, knappetype) og får tilbake true/false. Dersom dette er anderledes enn fra forigje gang den sjekket og den nå er nå true.
-	//Skriver den til chanelen drv_buttons. Den skriver da en ButtonEvent (struct) med etasje og knappetype.
-	go elevio.PollFloorSensor(drv_floors)
-	//Sjekker om heisen er i en etasje og den etasjen er ulik det den var sist gang den sjekket. Dersom den er det, skriver den til chanelen drv_floors. Den skriver da etasjen heisen er i, i form av en int.
-	go elevio.PollObstructionSwitch(drv_obstr)
-	//Sjekker om det er en obstruction i heisen. Dersom statuesn på obstruction endrer seg så skriver den true til chanelen drv_obstr. Dersom det ikke er obstruction, skriver den false.
+	//Skriver den til chanelen drvbuttons. Den skriver da en ButtonEvent (struct) med etasje og knappetype.
+	go elevio.PollFloorSensor(drvFloors)
+	//Sjekker om heisen er i en etasje og den etasjen er ulik det den var sist gang den sjekket. Dersom den er det, skriver den til chanelen drvFloors. Den skriver da etasjen heisen er i, i form av en int.
+	go elevio.PollObstructionSwitch(drvObstr)
+	//Sjekker om det er en obstruction i heisen. Dersom statuesn på obstruction endrer seg så skriver den true til chanelen drvObstr. Dersom det ikke er obstruction, skriver den false.
 	go elevio.PollStopButton(drv_stop)
 	//Sjekker om stopknappen er trykket inn. Den vil skrive true eller false til chanelen drv_stop når statusen endrer seg.
 
-	go fsm.PollTimerTimeout(timerTimeoutChan)
+	go fsm.PollTimerTimeOut(timerTimeOutChan)
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	//connectivity.TCP_setup()
-	TCP_receive_channel := make(chan connectivity.Worldview_package)
-	TCP_send_channel_listen := make(chan connectivity.Worldview_package)
-	TCP_send_channel_dail := make(chan connectivity.Worldview_package)
-	go connectivity.TCP_receving_setup(TCP_receive_channel, TCP_send_channel_listen, TCP_send_channel_dail)
+	tcpReceiveChannel := make(chan connectivity.WorldviewPackage)
+	TCP_send_channel_listen := make(chan connectivity.WorldviewPackage)
+	TCP_send_channel_dail := make(chan connectivity.WorldviewPackage)
+	go connectivity.TcpReceivingSetup(tcpReceiveChannel, TCP_send_channel_listen, TCP_send_channel_dail)
 
 	// Go routine to send world view every second
-	var world_view_send_ticker <-chan time.Time
+	var worldViewSendTicker <-chan time.Time
 	ticker := time.NewTicker(1000 * time.Millisecond)
 	defer ticker.Stop() // Ensure the ticker stops when the program exits
-	world_view_send_ticker = ticker.C
+	worldViewSendTicker = ticker.C
 
 	//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	time.Sleep(2000 * time.Millisecond)
 	fmt.Println("Started!")
 
 	inputPollRateMs := 25
-	prev_floor := -1
+	prevFloor := -1
 
-	fsm.SetElevatorToValidStartPossition()
+	fsm.SetElevatorToValidStartPosition()
 
 	for {
 		select {
 		// Kan enten få inn en ButtonEvent, en etasje (int) eller en obstruction
-		case a := <-drv_buttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drv_buttons
+		case a := <-drvbuttons: // Hvis det kommer en ButtonEvent {Floor, ButtonType} fra chanelen drvbuttons
 			fmt.Println("Button event-------------------------------------------------------------------------")
 			fmt.Printf("%+v\n", a)
-			fsm.Fsm_onRequestButtonPress(a.Floor, a.Button)
+			fsm.FsmOnRequestButtonPress(a.Floor, a.Button)
 
-		case a := <-drv_floors: // Hvis det kommer en etasje (int) fra chanelen drv_floors
+		case a := <-drvFloors: // Hvis det kommer en etasje (int) fra chanelen drvFloors
 			fmt.Println("Floor event")
 			fmt.Printf("%+v\n", a)
-			if a != -1 && a != prev_floor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
-				fsm.Fsm_onFloorArrival(a)
+			if a != -1 && a != prevFloor { // Hvis heisen er i en etasje og etasjen er ulik den forrige etasjen
+				fsm.FsmOnFloorArrival(a)
 			}
-			prev_floor = a
+			prevFloor = a
 
-		case a := <-timerTimeoutChan: // Hvis det kommer en bool, True, fra chanelen timerTimeoutChan
+		case a := <-timerTimeOutChan: // Hvis det kommer en bool, True, fra chanelen timerTimeOutChan
 			if a {
-				fmt.Println("Door timeout")
+				fmt.Println("Door TimeOut")
 				fsm.TimerStop()
-				fsm.Fsm_onDoorTimeout()
+				fsm.FsmOnDoorTimeOut()
 			}
 
-		case a := <-drv_obstr:
+		case a := <-drvObstr:
 			fmt.Println("Obstruction event toggle")
 			fsm.SetObsructionStatus(a)
 			fsm.TimerStart(3)
 
-		case <-world_view_send_ticker:
+		case <-worldViewSendTicker:
 			//fmt.Println("Sending world view")
-			connectivity.Send_world_view()
+			connectivity.SendWorldView()
 			//connectivity.PrintIsOnline()
 
-			//case world_view := <-TCP_receive_channel:
-			//fmt.Println("World view reseved, PC:", world_view.Elevator_ID, "\n")
+			//case worldView := <-tcpReceiveChannel:
+			//fmt.Println("World view reseved, PC:", worldView.ElevatorID, "\n")
 			//fmt.Println("\n\n")
 			time.Sleep(500 * time.Duration(inputPollRateMs))
 
-		case recived_world_view := <-TCP_receive_channel:
-			fmt.Println("World view reseved, PC:", recived_world_view.Elevator_ID)
+		case recived_worldView := <-tcpReceiveChannel:
+			fmt.Println("World view reseved, PC:", recived_worldView.ElevatorID)
 		}
 
 	}

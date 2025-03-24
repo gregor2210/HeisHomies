@@ -1,0 +1,37 @@
+Networking:
+
+1. Første linjenene i const er det bare kommentar, fjerne?
+
+3. Linje 204, skjønte ikke formålet? 
+
+4. Linje 258, skjønte ikke, linjene etter det, smør på flesk med både oversikt på starten av funksjonen og forklaring underveis?
+
+5. Linje 453 og resten, fjerne?
+
+4. Oppdatere funksjoner til å ikke bruke _, som setTryingToSetupMatrix, men heller som setElevatorOnline
+
+5. Oppdatere setListenDialConnMatrix til dial
+
+6. Oppdatere funksjoner som bruker i og j, til å heller bruke f.eks server/klient?
+
+
+Main:
+
+1. Flytte connectToElevatorserver?
+
+
+
+FSM:
+
+1. Linjer 27 til 31, fjerne alt av kommentert funksjon?
+
+
+
+io_threads_setup:
+
+1. stop funksjon?
+
+
+backup:
+
+1. Append kommenteringen?

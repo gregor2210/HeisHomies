@@ -9,7 +9,7 @@ import (
 const _pollRate = 20 * time.Millisecond
 
 // Function that polls the timer at a given rate. Sends a signal when the timer has timed out
-func PollTimerTimeout(receiver chan<- bool) {
+func PollTimerTimeOut(receiver chan<- bool) {
 	for {
 		time.Sleep(_pollRate) // Poll rate, adjust as needed
 		if TimerTimedOut() {

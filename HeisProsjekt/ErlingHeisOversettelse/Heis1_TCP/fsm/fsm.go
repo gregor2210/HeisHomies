@@ -2,22 +2,19 @@ package fsm
 
 import (
 	"Driver-go/elevio"
-	"fmt"
 	"sync"
 )
 
 var (
-	elevator       Elevator = NewElevator()
-	elevator_mutex sync.Mutex
+	elevator      Elevator = NewElevator()
+	elevatorMutex sync.Mutex
 )
 
 func GetElevatorStruct() Elevator {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
 	return elevator
 }
-
-//ElevatorOUtputDevice er den utdelte go driverern!
 
 func setAllLights(elevator Elevator) {
 	for floor := 0; floor < NumFloors; floor++ {
@@ -28,110 +25,103 @@ func setAllLights(elevator Elevator) {
 }
 
 // func fsm_onInitBetweenFloors() {
-// 	elevio.SetMotorDirection(elevio.MD_Down)
-// 	elevator.dirn = elevio.MD_Down
-// 	elevator.behaviour = EB_Moving
+// 	elevio.SetMotorDirection(elevio.MotorDown)
+// 	elevator.dirn = elevio.MotorDown
+// 	elevator.behaviour = ElevMoving
 // }
 
-func Fsm_onRequestButtonPress(btn_floor int, btn_type elevio.ButtonType) {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
-	fmt.Printf("\n\nfsm_onRequestButtonPress(%d)\n", btn_floor)
+func FsmOnRequestButtonPress(btnFloor int, btnType elevio.ButtonType) {
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
 
 	switch elevator.Behaviour {
-	case EB_DoorOpen:
-		if requests_shouldClearImmediately(elevator, btn_floor, btn_type) { // Hvis heisen allerede er i etasjen og knappen er trykket inn
-			TimerStart(elevator.DoorOpenDuration_s) // Start dørtimeren på nytt
-		} else {
-			elevator.Requests[btn_floor][btn_type] = true // Ellers legg forespørselen til i køen
-		}
-	case EB_Moving:
-		elevator.Requests[btn_floor][btn_type] = true // I bevegelse, så ikke gjøre annet enn å legge til i køen
+	case ElevDoorOpen:
+		// Button pressed at current floor
+		if requestsShouldClearImmediately(elevator, btnFloor, btnType) {
+			TimerStart(elevator.DoorOpenDuration_s) // Restart door timer
 
-	case EB_Idle:
-		elevator.Requests[btn_floor][btn_type] = true                   // Heisen er i ro, må finne retning og starte bevegelse
-		var pair DirnBehaviourPair = requests_chooseDirection(elevator) // Velg retning basert på forespørsler
-		elevator.Dirn = pair.dirn                                       // Oppdater retning
-		elevator.Behaviour = pair.behaviour                             // Oppdater tilstand
+		} else {
+			elevator.Requests[btnFloor][btnType] = true // // Add request to queue
+		}
+	case ElevMoving:
+		elevator.Requests[btnFloor][btnType] = true // In motion, so only add to the queue
+
+	case ElevIdle:
+		elevator.Requests[btnFloor][btnType] = true
+		var pair DirnBehaviourPair = requestsChooseDirection(elevator)
+		elevator.Dirn = pair.dirn
+		elevator.Behaviour = pair.behaviour
+
 		switch pair.behaviour {
-		case EB_DoorOpen: // Hvis heisen skal stoppe i etasjen den står i
+		case ElevDoorOpen:
 			elevio.SetDoorOpenLamp(true)
 			TimerStart(elevator.DoorOpenDuration_s)
-			elevator = requests_clearAtCurrentFloor(elevator)
+			elevator = requestsClearAtCurrentFloor(elevator)
 
-		case EB_Moving: // Hvis heisen skal starte bevegelse
-			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.Dirn)) // Start motoren
+		case ElevMoving:
+			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.Dirn))
 
-		case EB_Idle:
+		case ElevIdle:
 		}
 	}
 
-	setAllLights(elevator) // Oppdater lysindikatorene
+	setAllLights(elevator)
 
-	fmt.Println("\nNew state:")
 }
 
-func Fsm_onFloorArrival(newFloor int) {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
-	fmt.Printf("\n\nfsm_onFloorArrival(%d)\n", newFloor)
+func FsmOnFloorArrival(newFloor int) {
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
 	elevator.Floor = newFloor
-
 	elevio.SetFloorIndicator(elevator.Floor)
 
 	switch elevator.Behaviour {
-	case EB_Moving:
-		if requests_shouldStop(elevator) { // Hvis heisen skal stoppe i etasjen den er i, enten fordi request i riktig retning i etasjen eller cab, eller ingen flere forespørsler
-			elevio.SetMotorDirection(elevio.MD_Stop)          // Stopp motoren
-			elevio.SetDoorOpenLamp(true)                      // Åpne døren
-			elevator = requests_clearAtCurrentFloor(elevator) // Rydd opp forespørslene i etasjen
+	case ElevMoving:
+
+		// Stop if request in direction, cab call, or no more requests
+		if requestsShouldStop(elevator) {
+			elevio.SetMotorDirection(elevio.MotorStop)
+			elevio.SetDoorOpenLamp(true)
+			elevator = requestsClearAtCurrentFloor(elevator)
 			TimerStart(elevator.DoorOpenDuration_s)
 			setAllLights(elevator)
-			elevator.Behaviour = EB_DoorOpen
+			elevator.Behaviour = ElevDoorOpen
 		}
 	default:
 	}
 
-	fmt.Println("\nNew state:")
 }
 
-func Fsm_onDoorTimeout() {
-	elevator_mutex.Lock()
-	defer elevator_mutex.Unlock()
-	fmt.Printf("\n\nfsm_onDoorTimeout()\n")
+func FsmOnDoorTimeOut() {
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
 
 	switch elevator.Behaviour {
-	case EB_DoorOpen:
-		// Velg retning basert på forespørsler
-		var pair DirnBehaviourPair = requests_chooseDirection(elevator)
+	case ElevDoorOpen:
+
+		var pair DirnBehaviourPair = requestsChooseDirection(elevator)
 		elevator.Dirn = pair.dirn
 		elevator.Behaviour = pair.behaviour
 
 		switch elevator.Behaviour {
-		case EB_DoorOpen:
-			// Restart dørtimeren
+		case ElevDoorOpen:
+			// Restart door timer
 			TimerStart(elevator.DoorOpenDuration_s)
 
-			// Rydd opp forespørslene i nåværende etasje
-			elevator = requests_clearAtCurrentFloor(elevator)
+			elevator = requestsClearAtCurrentFloor(elevator)
 
-			// Oppdater alle lysindikatorer
 			setAllLights(elevator)
 
-		case EB_Moving:
-			// Start motoren
-			elevio.SetDoorOpenLamp(false) // Slå av dørindikatoren
+		case ElevMoving:
+			elevio.SetDoorOpenLamp(false)
 			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.Dirn))
-			fmt.Printf("Motor started moving in direction: %v\n", elevator.Dirn)
 
-		case EB_Idle:
-			// Ingen forespørsler igjen, sett til idle
+		case ElevIdle:
 			elevio.SetDoorOpenLamp(false)
 		}
 
 	default:
-		// Ingenting å gjøre hvis tilstanden ikke er EB_DoorOpen
+		// Nothing to do if the state is not ElevDoorOpen
 	}
 
-	fmt.Println("\nNew state:")
 }

@@ -34,6 +34,7 @@ class Resource(T)
             sem = new Semaphore(0);
         }
     }
+<<<<<<< HEAD
 
     T allocate(int priority)
     {
@@ -44,12 +45,24 @@ class Resource(T)
             mtx.notify(); // Slipp muteksen slik at andre tråder kan kjøre
             sems[priority].wait(); // Vent på tur i riktig kø
             numWaiting[priority]--; // Når vi våkner, fjern oss fra ventelisten
+=======
+    
+    
+    T allocate(int priority){
+        mtx.wait();  // Lås muteksen
+        if (busy) {  
+            numWaiting[priority]++;  // Registrer at vi venter før vi slipper muteksen
+            mtx.notify();  // Slipp muteksen slik at andre tråder kan kjøre
+            sems[priority].wait();  // Vent på tur i riktig kø
+            numWaiting[priority]--;  // Når vi våkner, fjern oss fra ventelisten
+>>>>>>> f1a4d632ef83da8d02f97be5b3fdee1dc787e35c
         }
         busy = true; // Nå er ressursen opptatt
         mtx.notify(); // Slipp muteksen slik at andre kan sjekke status
         return value;
     }
 
+<<<<<<< HEAD
     void deallocate(T v)
     {
         mtx.wait(); // Lås muteksen
@@ -67,6 +80,14 @@ class Resource(T)
         else
         {
             mtx.notify(); // Ingen venter, slipp muteksen
+=======
+        if (numWaiting[1] > 0) {  
+            sems[1].notify();  //  Vekk en VIP hvis noen venter
+        } else if (numWaiting[0] > 0) {  
+            sems[0].notify();  //  Vekk en vanlig gjest hvis ingen VIP-er venter
+        } else {  
+            mtx.notify();  //  Ingen venter, slipp muteksen
+>>>>>>> f1a4d632ef83da8d02f97be5b3fdee1dc787e35c
         }
     }
 }

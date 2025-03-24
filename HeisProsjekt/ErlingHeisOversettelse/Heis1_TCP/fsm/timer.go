@@ -5,37 +5,40 @@ import (
 	"time"
 )
 
-// HVIS DENNE ENDRES, HUSK Å ENDRE I ELEVAOTR:IO.GO OGSÅ
+// IF THIS CHANGES, REMEMBER TO UPDATE IT IN ELEVATOR:IO.GO AS WELL
 const _pollRate = 20 * time.Millisecond
-
-// Function that polls the timer at a given rate. Sends a signal when the timer has timed out
-func PollTimerTimeout(receiver chan<- bool) {
-	for {
-		time.Sleep(_pollRate) // Poll rate, adjust as needed
-		if TimerTimedOut() {
-			receiver <- true // Send a signal when the timer has timed out
-		}
-	}
-}
 
 var timerEndTime time.Time
 var timerActive bool
 
+// Polls the timer and signals on TimeOut
+func PollTimerTimeOut(receiver chan<- bool) {
+	for {
+		time.Sleep(_pollRate) // Poll rate, adjust as needed
+		if TimerTimedOut() {
+			receiver <- true
+		}
+	}
+}
+
+// Current time
 func getWallTime() time.Time {
 	return time.Now()
 }
 
-// starts a timer with a given duration
+// Starts a timer with a given duration
 func TimerStart(duration float64) {
 	fmt.Println("Timer started, for:", duration)
 	timerEndTime = getWallTime().Add(time.Duration(duration * float64(time.Second)))
 	timerActive = true
 }
 
+// Stops running timer
 func TimerStop() {
 	timerActive = false
 }
 
+// Returns true if timer expired and no obstruction
 func TimerTimedOut() bool {
 	return timerActive && getWallTime().After(timerEndTime) && !(elevator.Obstruction)
 }
