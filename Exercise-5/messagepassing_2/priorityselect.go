@@ -35,21 +35,30 @@ type Resource struct {
 }
 
 
-func resourceManager(takeLow chan Resource, takeHigh chan Resource, giveBack chan Resource){
-
+func resourceManager(takeLow chan Resource, takeHigh chan Resource, giveBack chan Resource) {
     res := Resource{}
-    
     for {
         select {
-        case takeHigh<- res:
-            //fmt.Printf("[resource manager]: resource taken (high)\n")
-        case takeLow<- res:
-            //fmt.Printf("[resource manager]: resource taken (low)\n")
+        // Always prioritize high-priority requests
         case res = <-giveBack:
-            //fmt.Printf("[resource manager]: resource returned\n")
+            // Wait for the resource to be returned
+            // fmt.Println("[manager] resource returned")
+        case takeHigh <- res:
+            // fmt.Println("[manager] sent to high")
+        default:
+            // Serve low-priority requests only if no high-priority requests are pending
+            select {
+            case takeHigh <- res:
+                // fmt.Println("[manager] sent to high")
+            case takeLow <- res:
+                // fmt.Println("[manager] sent to low")
+            case res = <-giveBack:
+                // fmt.Println("[manager] resource returned")
+            }
         }
     }
 }
+
     
 
 // --- RESOURCE USERS -- //
