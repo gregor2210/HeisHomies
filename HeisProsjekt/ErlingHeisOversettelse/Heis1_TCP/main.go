@@ -48,7 +48,7 @@ func main() {
 			// Starts order assignment if other elevators are online and it’s not a cab request
 			if len(connectivity.GetAllOnlineIds()) != 1 && buttonEvent.Button != elevio.BtnCab {
 				connectivity.PrintIsOnline()
-				connectivity.NewOrder(buttonEvent, true)
+				connectivity.NewOrder(buttonEvent)
 
 			} else {
 
@@ -66,6 +66,7 @@ func main() {
 				fsm.FsmOnFloorArrival(floor)
 			}
 			prevFloor = floor
+			connectivity.SetSelfOnline()
 
 		// Motor Error detected
 		case errorBool := <-motorErrorChan:
@@ -75,6 +76,14 @@ func main() {
 			if errorBool && !connectivity.SelfOnlyOnline() {
 				fmt.Println("Elevator has motor problems. Running start backup")
 				connectivity.StartMotorErrorBackupProcess()
+
+				// Resets motor direction of elevator
+				elevio.SetMotorDirection(elevio.MotorStop)
+				if prevFloor <= 1 {
+					elevio.SetMotorDirection(elevio.MotorUp)
+				} else {
+					elevio.SetMotorDirection(elevio.MotorDown)
+				}
 			}
 
 		// Door TimeOut after 3 seconds

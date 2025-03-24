@@ -11,14 +11,14 @@ const (
 	NumElevators = 3
 
 	// TimeOut for send and receive. If exceeded, connection is lost.
-	TimeOut = 3 //seconds
+	TimeOut = 4 //seconds
 
 	// Worldview max package size
 	MaxPacketSize = 1500
 
 	// UseIPs is set to true if you are gonna use different computer.
 	// Remember to set correct ips in IPs
-	UseIPs = false
+	UseIPs = true
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 
 	// IPs of the different computers.
 	// Computer with id 0 has inex 0 in this list
-	IPs = [NumElevators]string{"10.100.23.28", "10.100.23.32", "10.100.23.29"}
+	IPs = [NumElevators]string{"10.100.23.28", "10.100.23.33", "10.100.23.29"}
 )
 
 func init() {

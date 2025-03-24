@@ -30,6 +30,8 @@ Before running the program, choose what run mode you want to use.
 
 - Setting `UseIPs = true` will make the program attempt to connect to multiple computers. In this case, you must ensure that the `IPs` list is correctly set up. The list should contain the same number of IP addresses as `NumElevators`. The computer assigned ID `0` should have its IP address at index `0` in `IPs`, ID `1` at index `1`, and so on.
 
+- Find the ip using `hostname -I`
+
 You can change the `TimeOut` value if you want the program to be more or less aggressive in handling connection TimeOuts and packet loss scenarios.
 
 

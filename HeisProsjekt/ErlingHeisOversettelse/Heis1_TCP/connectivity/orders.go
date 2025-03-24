@@ -108,11 +108,11 @@ func CalculatePriorityValue(buttonEvent elevio.ButtonEvent, e fsm.Elevator) int 
 	return priorityValue
 }
 
-func NewOrder(buttonEvent elevio.ButtonEvent, includeSelf bool) {
+func NewOrder(buttonEvent elevio.ButtonEvent) {
 	// Figure out who should take which order.
 	// Sends the order to the selected elevator
 
-	if includeSelf && DoesOrderExist(buttonEvent) {
+	if DoesOrderExist(buttonEvent) {
 		fmt.Println("Order allready exist")
 		return
 	}
@@ -151,7 +151,7 @@ func NewOrder(buttonEvent elevio.ButtonEvent, includeSelf bool) {
 			}
 		}
 
-		if idOfElevatorThatWillGetOrder == ID && includeSelf {
+		if idOfElevatorThatWillGetOrder == ID {
 			//Send reqeust to self
 			fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button) // Ikke så fint at dnne er her
 			didOrderGetSent = true

@@ -129,6 +129,18 @@ func deserializeElevator(data []byte) (WorldviewPackage, error) {
 	return wv, err
 }
 
+// Function that closes all connections and sets all elevators offline
+func CloseAllConnections() {
+	for server := 0; server < NumElevators-1; server++ {
+		for client := server + 1; client < NumElevators; client++ {
+			if getListenDialConnMatrix(server, client) != nil {
+				getListenDialConnMatrix(server, client).Close()
+			}
+			// Everything will close when the read/write fails
+		}
+	}
+}
+
 func TcpReceivingSetup(tcpReceiveChannel chan WorldviewPackage) {
 	// Every 2 seconds, attempts to:
 	// 1. Set up TCP servers and clients
@@ -140,34 +152,37 @@ func TcpReceivingSetup(tcpReceiveChannel chan WorldviewPackage) {
 	fmt.Println("Starting TCP receving setup")
 	for {
 
-		// Server setup
-		for client := ID + 1; client < NumElevators; client++ {
-			if !getTryingToSetupMatrix(ID, client) && !IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
-				fmt.Println("Starting up tcpServerSetup. ", ID, "listening for: ", client)
-				go tcpServerSetup(client)
+		if IsSelfOnline() {
+			fmt.Println("TCP receving setup")
+			// Server setup
+			for client := ID + 1; client < NumElevators; client++ {
+				if !getTryingToSetupMatrix(ID, client) && !IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
+					fmt.Println("Starting up tcpServerSetup. ", ID, "listening for: ", client)
+					go tcpServerSetup(client)
+				}
+
+				// Server receiver setup
+				if IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
+					fmt.Println("Starting handleReceive for connected elevator")
+					go handleReceive(getListenDialConnMatrix(ID, client), tcpReceiveChannel, client, ID, client)
+				}
 			}
 
-			// Server receiver setup
-			if IsOnline(client) && !getReceiverRunningMatrix(ID, client) {
-				fmt.Println("Starting handleReceive for connected elevator")
-				go handleReceive(getListenDialConnMatrix(ID, client), tcpReceiveChannel, client, ID, client)
-			}
-		}
+			//Client setup
+			for server := 0; server < ID; server++ {
+				//Client connection setup
+				if !getTryingToSetupMatrix(server, ID) && !IsOnline(server) && !getReceiverRunningMatrix(server, ID) {
+					fmt.Println("Starting up tcpClientSetup. ", ID, "dialing to: ", server)
+					go tcpClientSetup(server)
+				}
 
-		//Client setup
-		for server := 0; server < ID; server++ {
-			//Client connection setup
-			if !getTryingToSetupMatrix(server, ID) && !IsOnline(server) && !getReceiverRunningMatrix(server, ID) {
-				fmt.Println("Starting up tcpClientSetup. ", ID, "dialing to: ", server)
-				go tcpClientSetup(server)
-			}
+				//Client rescever setup
+				if IsOnline(server) && !getReceiverRunningMatrix(server, ID) {
+					fmt.Println("Starting handleReceive for elevator we are connected to")
+					go handleReceive(getListenDialConnMatrix(server, ID), tcpReceiveChannel, server, server, ID)
+				}
 
-			//Client rescever setup
-			if IsOnline(server) && !getReceiverRunningMatrix(server, ID) {
-				fmt.Println("Starting handleReceive for elevator we are connected to")
-				go handleReceive(getListenDialConnMatrix(server, ID), tcpReceiveChannel, server, server, ID)
 			}
-
 		}
 		time.Sleep(time.Duration(loopTimer) * time.Second)
 
@@ -251,7 +266,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 		// Setting read deadline
 		err := conn.SetReadDeadline(time.Now().Add(TimeOut * time.Second))
 		if err != nil {
-			fmt.Println("Conn not open")
+			fmt.Println("Conn not open:", err)
 			SetElevatorOffline(connectedElevatorID)
 			setReceiverRunningMatrix(server, client, false)
 			return
@@ -271,7 +286,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 		buffer := make([]byte, packetLength)
 		_, err = conn.Read(buffer)
 		if err != nil {
-			fmt.Println("Error receiving or timedout, closing receive goroutine and conn")
+			fmt.Println("Error receiving or timedout, closing receive goroutine and conn: ", err)
 			SetElevatorOffline(connectedElevatorID)
 			setReceiverRunningMatrix(server, client, false)
 			return
@@ -280,7 +295,11 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 		// Deserialize the buffer to worldview package
 		receivedWorldViewPackage, err := deserializeElevator(buffer)
 		if err != nil {
-			log.Fatal("failed to deserialize:", err)
+			fmt.Println("failed to deserialize:", err)
+			fmt.Println("Seting elevator offline")
+			SetElevatorOffline(connectedElevatorID)
+			setReceiverRunningMatrix(server, client, false)
+			return
 		}
 
 		// Store backup worldview from incomming elevator
@@ -326,7 +345,7 @@ func SendWorldView() {
 			// Write packet length
 			err = binary.Write(serverConn, binary.BigEndian, packetLength)
 			if err != nil {
-				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
+				fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
 				SetElevatorOffline(connectedElevatorID) //setting status of connected elevator to offline
 				serverConn.Close()
 				continue
@@ -335,9 +354,9 @@ func SendWorldView() {
 			// Write actual package
 			_, err = serverConn.Write(serializedWorldViewPackage)
 			if err != nil {
-				fmt.Println("Error sending, connection lost.")
+				fmt.Println("Error sending, connection lost: ", err)
 				SetElevatorOffline(connectedElevatorID) //setting status of connected elevator to offline
-				fmt.Println("Elevator was set to ofline!!!!! 123")
+				fmt.Println("Elevator was set to ofline")
 				serverConn.Close()
 				continue
 			}
@@ -363,7 +382,7 @@ func SendWorldView() {
 
 			err = binary.Write(clientConn, binary.BigEndian, packetLength)
 			if err != nil {
-				fmt.Println("Error sending packetlength to connected elevator, connection lost.")
+				fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
 				SetElevatorOffline(connectedElevatorID)
 				clientConn.Close()
 				continue
@@ -371,7 +390,7 @@ func SendWorldView() {
 
 			_, err = clientConn.Write(serializedWorldViewPackage)
 			if err != nil {
-				fmt.Println("Error sending, connection lost.")
+				fmt.Println("Error sending, connection lost: ", err)
 				SetElevatorOffline(connectedElevatorID)
 				clientConn.Close()
 				continue
@@ -420,7 +439,7 @@ func SendOrderToSpecificElevator(receiverElev int, order elevio.ButtonEvent) boo
 
 	err = binary.Write(conn, binary.BigEndian, packetLength)
 	if err != nil {
-		fmt.Println("Error sending packetlength for ORDER to connected elevator, connection lost or timedout.")
+		fmt.Println("Error sending packetlength for ORDER to connected elevator, connection lost or timedout: ", err)
 		SetElevatorOffline(receiverElev)
 		conn.Close()
 		return false
@@ -430,7 +449,7 @@ func SendOrderToSpecificElevator(receiverElev int, order elevio.ButtonEvent) boo
 	// Writing actual package
 	_, err = conn.Write(serializedWorldViewPackage)
 	if err != nil {
-		fmt.Println("Error sending ORDER, connection lost.  or timedout")
+		fmt.Println("Error sending ORDER, connection lost.  or timedout: ", err)
 		SetElevatorOffline(receiverElev)
 		conn.Close()
 		return false

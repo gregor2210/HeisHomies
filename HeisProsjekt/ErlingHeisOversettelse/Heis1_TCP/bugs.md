@@ -7,6 +7,8 @@
 
 ### Burde se på bugs
 11) Hvis heis er på vei en retning. Så stopper den på et mellomstopp. Da vil den ikke kunne ta en hall request i motsatt retning!
+2) Når det er packetloss og en heis dc. Så kan en annen heis ta den orderen. så connecter de, synker ordre, så dc igjen og den andre heisen tar den orderen. blir en loop
+Error sending packet lenghts... : write: BROKEN PIPE, så går den inn i setElvOFline og låser seg der!!!!????
 
 
 ### Ikke krise bugs
@@ -21,6 +23,9 @@ bugs med motor dc
 Lys skrur seg ikke av når den har gitt bort ordre og noen andre har gjort de.
 Ny ordre mens motoren er av gies fortsatt til heisen med ødelagt motor.
 
+
+### SPESIFIKASJONER MANGLER?
+1) 
 
 
 --------------------------- Tror løst-----------------------------------------

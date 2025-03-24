@@ -91,3 +91,10 @@ func SetElevatorToValidStartPosition() {
 	}
 	setAllLights(elevator)
 }
+
+// Fucntion that sets all requests and lights to false
+func ClearAllRequests() {
+	elevator.Requests = [NumFloors][NumButtons]bool{}
+	setAllLights(elevator)
+}
+
