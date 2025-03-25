@@ -37,6 +37,7 @@ func main() {
 	prevFloor := -1
 
 	// Logic loop for elevator and communication
+	// The main loop that make sure only one event is handled at a time
 	for {
 
 		select {
@@ -53,7 +54,7 @@ func main() {
 			} else {
 
 				// Handles request if no other elevators are online or it’s a cab request
-				fmt.Println("No other online elevators or a cab call. Take order")
+				fmt.Println("No other online elevators or a cab call. Taking order")
 				fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button)
 			}
 
@@ -98,7 +99,7 @@ func main() {
 		case obstrEventBool := <-drvObstr:
 			fmt.Println("Obstruction event toggle")
 			fsm.SetObstructionStatus(obstrEventBool)
-			fsm.TimerStart(3)
+			fsm.TimerDoorStart(3)
 
 		// World view ticker happens every 100 milliseconds
 		case <-worldViewSendTicker:

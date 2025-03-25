@@ -229,7 +229,7 @@ func tcpClientSetup(elevDialingToID int) {
 
 		// Will try to dial every second until it connects
 		fmt.Printf("Trying to dail to ip: %s\n", clientIP)
-		conn, err := net.DialTimeout("tcp", clientIP, 2*time.Second) // Timeout after 2s
+		conn, err := net.DialTimeout("tcp", clientIP, TimeOut*time.Second) // Timeout after 2 TimeOut (config) seconds
 		if err != nil {
 			fmt.Println("Dailing id ", elevDialingToID, "failed, retrying in 1/2 seconds...")
 			time.Sleep(500 * time.Millisecond)

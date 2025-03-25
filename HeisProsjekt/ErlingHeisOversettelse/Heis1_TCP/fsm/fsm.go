@@ -36,7 +36,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType elevio.ButtonType) {
 	case ElevDoorOpen:
 		// Button pressed at current floor
 		if requestsShouldClearImmediately(elevator, btnFloor, btnType) {
-			TimerStart(elevator.DoorOpenDuration_s) // Restart door timer
+			TimerDoorStart(elevator.DoorOpenDuration_s) // Restart door timer
 
 		} else {
 			elevator.Requests[btnFloor][btnType] = true // // Add request to queue
@@ -53,7 +53,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType elevio.ButtonType) {
 		switch pair.behaviour {
 		case ElevDoorOpen:
 			elevio.SetDoorOpenLamp(true)
-			TimerStart(elevator.DoorOpenDuration_s)
+			TimerDoorStart(elevator.DoorOpenDuration_s)
 			elevator = requestsClearAtCurrentFloor(elevator)
 
 		case ElevMoving:
@@ -83,7 +83,7 @@ func FsmOnFloorArrival(newFloor int) {
 			StopMotorErrorTimer()
 			elevio.SetDoorOpenLamp(true)
 			elevator = requestsClearAtCurrentFloor(elevator)
-			TimerStart(elevator.DoorOpenDuration_s)
+			TimerDoorStart(elevator.DoorOpenDuration_s)
 			setAllLights(elevator)
 			elevator.Behaviour = ElevDoorOpen
 		}
@@ -106,7 +106,7 @@ func FsmOnDoorTimeOut() {
 		switch elevator.Behaviour {
 		case ElevDoorOpen:
 			// Restart door timer
-			TimerStart(elevator.DoorOpenDuration_s)
+			TimerDoorStart(elevator.DoorOpenDuration_s)
 
 			elevator = requestsClearAtCurrentFloor(elevator)
 

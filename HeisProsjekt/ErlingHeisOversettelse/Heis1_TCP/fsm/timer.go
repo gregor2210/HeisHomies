@@ -27,7 +27,7 @@ func getWallTime() time.Time {
 }
 
 // Starts a timer with a given duration
-func TimerStart(duration float64) {
+func TimerDoorStart(duration float64) {
 	fmt.Println("Timer started, for:", duration)
 	timerEndTime = getWallTime().Add(time.Duration(duration * float64(time.Second)))
 	timerActive = true
