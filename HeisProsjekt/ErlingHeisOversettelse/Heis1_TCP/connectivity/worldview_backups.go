@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	// worldViewBackup[i] is the last known state of elevator i
 	worldViewBackup      [NumElevators]WorldviewPackage
 	worldViewBackupMutex sync.Mutex
 )

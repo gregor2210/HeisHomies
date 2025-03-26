@@ -17,7 +17,7 @@ var (
 
 func init() {
 	isOnline[ID] = true
-	offlineUpdateChan = make(chan int, 10)
+	offlineUpdateChan = make(chan int, 10) // Buffer size 10
 }
 
 func OnlineSetup(offlineUpdateChan_ chan int) {
