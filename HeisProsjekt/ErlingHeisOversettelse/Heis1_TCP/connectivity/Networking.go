@@ -324,79 +324,94 @@ func SendWorldView() {
 	//Finding package length
 	packetLength := uint32(len(serializedWorldViewPackage)) //uint32 is 4 bytes
 
+	var wg sync.WaitGroup
+
 	// Send to elevators where we are server
 	for connectedElevatorID := ID + 1; connectedElevatorID < NumElevators; connectedElevatorID++ {
 		if IsOnline(connectedElevatorID) {
+			wg.Add(1)
+			go func(connectedElevatorID int) {
+				defer wg.Done()
 
-			// Send packet length first to avoid message stacking
-			serverConn := getListenDialConnMatrix(ID, connectedElevatorID)
+				// Send packet length first to avoid message stacking
+				serverConn := getListenDialConnMatrix(ID, connectedElevatorID)
 
-			// Start write session with TimeOut
-			err = serverConn.SetWriteDeadline(time.Now().Add(TimeOut * time.Second))
-			if err != nil {
-				fmt.Println("Failed to set write deadline for server write:", err, connectedElevatorID)
-				SetElevatorOffline(connectedElevatorID)
-				serverConn.Close()
-				continue
+				// Start write session with TimeOut
+				err = serverConn.SetWriteDeadline(time.Now().Add(TimeOut * time.Second))
+				if err != nil {
+					fmt.Println("Failed to set write deadline for server write:", err, connectedElevatorID)
+					SetElevatorOffline(connectedElevatorID)
+					serverConn.Close()
+					return
+				}
 
-			}
-			// Write packet length
-			err = binary.Write(serverConn, binary.BigEndian, packetLength)
-			if err != nil {
-				fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
-				SetElevatorOffline(connectedElevatorID) //setting status of connected elevator to offline
-				serverConn.Close()
-				continue
-			}
+				// Write packet length
+				err = binary.Write(serverConn, binary.BigEndian, packetLength)
+				if err != nil {
+					fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
+					SetElevatorOffline(connectedElevatorID) // setting status of connected elevator to offline
+					serverConn.Close()
+					return
+				}
 
-			// Write actual package
-			_, err = serverConn.Write(serializedWorldViewPackage)
-			if err != nil {
-				fmt.Println("Error sending, connection lost: ", err)
-				SetElevatorOffline(connectedElevatorID) //setting status of connected elevator to offline
-				fmt.Println("Elevator was set to ofline")
-				serverConn.Close()
-				continue
-			}
+				// Write actual package
+				_, err = serverConn.Write(serializedWorldViewPackage)
+				if err != nil {
+					fmt.Println("Error sending, connection lost: ", err)
+					SetElevatorOffline(connectedElevatorID) // setting status of connected elevator to offline
+					fmt.Println("Elevator was set to offline")
+					serverConn.Close()
+					return
+				}
 
-			// Disable write deadline after transmission
-			serverConn.SetWriteDeadline(time.Time{})
+				// Disable write deadline after transmission
+				serverConn.SetWriteDeadline(time.Time{})
+			}(connectedElevatorID)
 		}
 	}
+
+	// Wait for all goroutines to finish
+	wg.Wait()
 
 	// Send to elevators where we are client
 	for connectedElevatorID := 0; connectedElevatorID < ID; connectedElevatorID++ {
 		if IsOnline(connectedElevatorID) {
+			wg.Add(1)
+			go func(connectedElevatorID int) {
+				defer wg.Done()
 
-			clientConn := getListenDialConnMatrix(connectedElevatorID, ID)
+				clientConn := getListenDialConnMatrix(connectedElevatorID, ID)
 
-			err = clientConn.SetWriteDeadline(time.Now().Add(TimeOut * time.Second))
-			if err != nil {
-				fmt.Println("Failed to set write deadline for client write:", err, connectedElevatorID)
-				SetElevatorOffline(connectedElevatorID)
-				clientConn.Close()
-				continue
-			}
+				err = clientConn.SetWriteDeadline(time.Now().Add(TimeOut * time.Second))
+				if err != nil {
+					fmt.Println("Failed to set write deadline for client write:", err, connectedElevatorID)
+					SetElevatorOffline(connectedElevatorID)
+					clientConn.Close()
+					return
+				}
 
-			err = binary.Write(clientConn, binary.BigEndian, packetLength)
-			if err != nil {
-				fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
-				SetElevatorOffline(connectedElevatorID)
-				clientConn.Close()
-				continue
-			}
+				err = binary.Write(clientConn, binary.BigEndian, packetLength)
+				if err != nil {
+					fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
+					SetElevatorOffline(connectedElevatorID)
+					clientConn.Close()
+					return
+				}
 
-			_, err = clientConn.Write(serializedWorldViewPackage)
-			if err != nil {
-				fmt.Println("Error sending, connection lost: ", err)
-				SetElevatorOffline(connectedElevatorID)
-				clientConn.Close()
-				continue
-			}
+				_, err = clientConn.Write(serializedWorldViewPackage)
+				if err != nil {
+					fmt.Println("Error sending, connection lost: ", err)
+					SetElevatorOffline(connectedElevatorID)
+					clientConn.Close()
+					return
+				}
 
-			clientConn.SetWriteDeadline(time.Time{})
+				clientConn.SetWriteDeadline(time.Time{})
+			}(connectedElevatorID)
 		}
 	}
+
+	wg.Wait()
 }
 
 func SendOrderToSpecificElevator(receiverElev int, order elevio.ButtonEvent) bool {
