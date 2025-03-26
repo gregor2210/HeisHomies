@@ -6,22 +6,19 @@ import (
 	"time"
 )
 
-// IF THIS CHANGES, REMEMBER TO UPDATE IT IN ELEVATOR:IO.GO AS WELL
-const _motorPullRate = 20 * time.Millisecond
-
 var (
-	motorErrorChan    chan bool
+	motorErrorChan    = make(chan bool)
 	motorTimerEndTime time.Time
 	motorTimerActive  bool
 )
 
 // Polls the timer and signals on TimeOut
-func PollMotorTimerTimeOut(receiver chan<- bool) {
+func PollMotorTimerTimeOut() {
 	for {
-		time.Sleep(_motorPullRate) // Poll rate, adjust as needed
+		time.Sleep(_timerPollRate) // Poll rate, adjust as needed
 		if MotorTimerTimedOut() {
 			//
-			fmt.Println("Motor error timer time out")
+			fmt.Println("Motor error timer timed out")
 			motorErrorChan <- true
 			motorTimerActive = false
 		}
@@ -31,7 +28,7 @@ func PollMotorTimerTimeOut(receiver chan<- bool) {
 // Starts motor error timer if behaviour is not MotorStop
 func StartMotorErrorTimer(elv Elevator) {
 	if elv.Behaviour != elevio.MotorStop {
-		var duration float64 = 10 // 10sec
+		var duration float64 = _motorErrorDuration
 		fmt.Println("Motor timer started, for:", duration)
 		motorTimerEndTime = time.Now().Add(time.Duration(duration * float64(time.Second)))
 		motorTimerActive = true
