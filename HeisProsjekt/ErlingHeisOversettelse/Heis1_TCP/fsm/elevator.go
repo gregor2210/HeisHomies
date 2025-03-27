@@ -3,11 +3,10 @@ package fsm
 import (
 	"Driver-go/elevio"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 )
-
-const NumFloors int = 4
-const NumButtons int = 3
 
 func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
 	switch dirn {
@@ -104,4 +103,67 @@ func SetElevatorToValidStartPosition() {
 func ClearAllRequests() {
 	elevator.Requests = [NumFloors][NumButtons]bool{}
 	setAllLights(elevator)
+}
+
+// Function to store the last column of requests (cab calls) in a file, replacing the first row every time
+func storeCabRequests(elevator Elevator) {
+	file, err := os.OpenFile("./fsm/cab_requests.txt", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		fmt.Println("(Store) Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Collect cab request states (last column of requests)
+	var cabRequests []string
+	for floor := 0; floor < NumFloors; floor++ {
+		if elevator.Requests[floor][NumButtons-1] {
+			cabRequests = append(cabRequests, "1")
+		} else {
+			cabRequests = append(cabRequests, "0")
+		}
+	}
+
+	// Write the single row (overwrite file every time)
+	_, err = file.WriteString(strings.Join(cabRequests, ",") + "\n")
+	if err != nil {
+		fmt.Println("Error writing to file:", err)
+	}
+}
+
+// Function to read cab requests from a file and update the elevator's request state
+func loadCabRequests(elevator *Elevator) {
+	// Open the cab requests file
+	file, err := os.Open("./fsm/cab_requests.txt")
+	if err != nil {
+		fmt.Println("(Load) Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Read the entire file content
+	var content string
+	_, err = fmt.Fscan(file, &content)
+	if err != nil {
+		fmt.Println("(Load) Error reading file:", err)
+		return
+	}
+
+	// Split the content by commas to get individual button states
+	cabRequests := strings.Split(content, ",")
+	if len(cabRequests) != NumFloors {
+		fmt.Println("(Load) Invalid file format: number of entries doesn't match the number of floors")
+		return
+	}
+
+	// Update the elevator's request state based on the file content
+	for floor := 0; floor < NumFloors; floor++ {
+		if cabRequests[floor] == "1" {
+			elevator.Requests[floor][NumButtons-1] = true
+		} else {
+			elevator.Requests[floor][NumButtons-1] = false
+		}
+	}
+
+	fmt.Println("Cab requests loaded successfully")
 }

@@ -5,6 +5,10 @@ import (
 	"Driver-go/elevio"
 	"Driver-go/fsm"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -48,10 +52,33 @@ func main() {
 		networkFunctionality(drvButtons, worldViewSendTicker, offlineUpdateChan)
 	}()
 
-	// Make sure the elevator start running, set a call on current floor
-
 	wg.Wait()
 
+}
+
+func startChildProsess() (err error) {
+	// Get the directory of the current program and construct the path to main.go
+	_, currentFile, _, _ := runtime.Caller(0)
+	projectDir := filepath.Dir(currentFile) // Get the current directory of the running file
+
+	// Start another instance of the main.go file in a new terminal
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" { // For Windows
+		cmd = exec.Command("cmd", "/C", "start", "cmd", "/K", "go", "run", filepath.Join(projectDir, "main.go"), "-id", fmt.Sprintf("%d", connectivity.ID))
+	} else if runtime.GOOS == "linux" || runtime.GOOS == "darwin" { // For Linux or macOS
+		cmd = exec.Command("gnome-terminal", "--", "go", "run", filepath.Join(projectDir, "main.go"), "-id", fmt.Sprintf("%d", connectivity.ID))
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println("Error starting child process:", err)
+		return err
+	}
+
+	fmt.Println("Child process started with PID:", cmd.Process.Pid)
+	return nil
 }
 
 func connectToElevatorserver() {
@@ -68,7 +95,27 @@ func connectToElevatorserver() {
 	}
 	ip := fmt.Sprintf("localhost:%d", port)
 	fmt.Println("ID: ", connectivity.ID, ", ip: ", ip)
-	elevio.Init(ip, fsm.NumFloors)
+
+	// Connect to elevator server
+	for {
+		err := elevio.Init(ip, fsm.NumFloors)
+		if err == nil {
+			break
+		}
+		fmt.Println("Error connection to elevator server: ", err)
+		time.Sleep(1000 * time.Millisecond)
+	}
+	fmt.Println("Connected to elevator server")
+
+	// Start another instance of itself with the same ID, after connected to elevator server
+	for {
+		err := startChildProsess()
+		if err == nil {
+			break
+		}
+		time.Sleep(1000 * time.Millisecond)
+	}
+
 }
 
 func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, timerTimeOutChan <-chan bool,
@@ -91,12 +138,6 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 			// If elevator arrives at a different floor
 			if floor != -1 && floor != prevFloor {
 				fsm.FsmOnFloorArrival(floor)
-			}
-
-			// -1 is initial condition. Makes sure elevator starts moving
-			if prevFloor == -1 {
-				fmt.Println("Starting elevator movment")
-				fsm.FsmOnRequestButtonPress(floor, 2)
 			}
 			prevFloor = floor
 

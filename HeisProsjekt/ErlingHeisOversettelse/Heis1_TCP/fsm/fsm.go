@@ -81,7 +81,7 @@ func FsmOnRequestButtonPress(btnFloor int, btnType elevio.ButtonType) {
 		case ElevIdle:
 		}
 	}
-
+	storeCabRequests(elevator)
 	setAllLights(elevator)
 
 }
@@ -107,6 +107,7 @@ func FsmOnFloorArrival(newFloor int) {
 		}
 	default:
 	}
+	storeCabRequests(elevator)
 
 }
 
