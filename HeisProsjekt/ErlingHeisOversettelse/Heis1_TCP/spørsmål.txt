@@ -29,6 +29,12 @@
 
     6. Slette cab_requests.txt inni fsm
 
+    7. Endre connectToElevatorserver() til connectToElevatorServer()?
+
+    8. Endre elevio.InitIOHandling() til elevio.IOHandlingSetup() ? 
+
+    9. Main L110: Endre errorBool til motorErrorDetectedBool eller bare motorErrorDetected?
+
     
 
 
