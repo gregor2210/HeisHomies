@@ -38,6 +38,12 @@ func SetSelfOffline() {
 	isOnline[ID] = false
 }
 
+func IsSelfOnline() bool {
+	isOnlineMutex.Lock()
+	defer isOnlineMutex.Unlock()
+	return isOnline[ID]
+}
+
 func SetElevatorOnline(elevatorID int) {
 	isOnlineMutex.Lock()
 	defer isOnlineMutex.Unlock()
@@ -87,12 +93,6 @@ func SetElevatorOffline(elevatorID int) {
 	} else {
 		log.Fatal("Not valid elevatorID when SetElevatorOffline():", elevatorID)
 	}
-}
-
-func IsSelfOnline() bool {
-	isOnlineMutex.Lock()
-	defer isOnlineMutex.Unlock()
-	return isOnline[ID]
 }
 
 // Return true if elevator is online

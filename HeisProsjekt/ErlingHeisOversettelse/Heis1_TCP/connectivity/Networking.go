@@ -207,11 +207,16 @@ func tcpServerSetup(incomingElevID int) {
 		fmt.Println("Error in tcpServerSetup:", serverIP, err)
 	}
 
-	fmt.Println("Elevator ", incomingElevID, " connected to elevator ", ID, ". Setting ", incomingElevID, " to online")
+	// If self has gone offline by the time it accepts a connection, close the connection
+	if !IsSelfOnline() {
+		conn.Close()
 
-	setListenDialConnMatrix(ID, incomingElevID, conn)
-
-	SetElevatorOnline(incomingElevID)
+	} else {
+		// If self is online, set the connection and the elevator to online}
+		fmt.Println("Elevator ", incomingElevID, " connected to elevator ", ID, ". Setting ", incomingElevID, " to online")
+		setListenDialConnMatrix(ID, incomingElevID, conn)
+		SetElevatorOnline(incomingElevID)
+	}
 
 	setTryingToSetupMatrix(ID, incomingElevID, false)
 
@@ -225,23 +230,26 @@ func tcpClientSetup(elevDialingToID int) {
 
 	clientIP := getTcpWorldViewSendIPMatrix(elevDialingToID, ID)
 
+	fmt.Printf("Trying to dail to ip: %s\n", clientIP)
 	for {
-
 		// Will try to dial every second until it connects
-		fmt.Printf("Trying to dail to ip: %s\n", clientIP)
+
 		conn, err := net.DialTimeout("tcp", clientIP, TimeOut*time.Second) // Timeout after 2 TimeOut (config) seconds
 		if err != nil {
-			fmt.Println("Dailing id ", elevDialingToID, "failed, retrying in 1/2 seconds...")
+			//fmt.Println("Dailing id ", elevDialingToID, "failed, retrying in 1/2 seconds...")
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 
+		// If self has gone offline by the time it connects, close the connection
+		if !IsSelfOnline() {
+			conn.Close()
+			break
+		}
+
 		fmt.Println("Connected to", clientIP)
-
 		setListenDialConnMatrix(elevDialingToID, ID, conn)
-
 		SetElevatorOnline(elevDialingToID)
-
 		break
 	}
 	setTryingToSetupMatrix(elevDialingToID, ID, false)
@@ -259,7 +267,12 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 
 	fmt.Println("HANDLE RECEIVE STARTED, ID: " + fmt.Sprint(connectedElevatorID))
 	for {
-		// Replace with actual receiving logic
+		if !IsSelfOnline() { // not online
+			fmt.Println("Self offline, closing receive goroutine and conn")
+			SetElevatorOffline(connectedElevatorID)
+			setReceiverRunningMatrix(server, client, false)
+			return
+		}
 
 		// Setting read deadline
 		err := conn.SetReadDeadline(time.Now().Add(TimeOut * time.Second))
