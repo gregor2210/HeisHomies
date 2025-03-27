@@ -1,19 +1,5 @@
-Elevator driver for Go
-======================
-
-See [`main.go`](main.go) for usage example. The code is runnable with just `go run main.go `
-
----
-
-Add these lines to your `go.mod` file:
-```
-require Driver-go v0.0.0
-replace Driver-go => ./Driver-go
-```
-Where `./Driver-go` is the relative path to this folder, after you have downloaded it.
-
-
-
+Elevator driver for Go, HeisHomies
+==================================
 
 This program is designed to control multiple elevators across multiple computers in a distributed system. Each elevator operates independently but communicates with the others using a peer-to-peer (P2P) architecture over TCP. The system ensures coordinated elevator behavior by exchanging status updates and requests between all connected nodes.  
 

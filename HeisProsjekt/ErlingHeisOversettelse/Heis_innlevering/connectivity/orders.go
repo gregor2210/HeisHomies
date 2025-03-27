@@ -144,7 +144,7 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 			didOrderGetSent = true
 
 			// Update its worldview backup with this order
-			setOrderOnbackup(idOfElevatorThatWillGetOrder, buttonEvent)
+			//setOrderOnbackup(idOfElevatorThatWillGetOrder, buttonEvent)
 			break
 		}
 

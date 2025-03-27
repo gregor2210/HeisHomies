@@ -29,13 +29,7 @@ func StartBackupProcess(deadElevID int) {
 }
 
 // Start backupprosess for broken elevator
-func StartErrorProcess() {
-	//selfOnlyOnline := SelfOnlyOnline()
+func DisableComunicaton() {
 	SetSelfOffline()
 	CloseAllConnections()
-	//if !selfOnlyOnline {
-	// If there were other elevators online
-	// Then we know there is a backup of the requests
-	//fsm.ClearAllRequests()
-	//}
 }

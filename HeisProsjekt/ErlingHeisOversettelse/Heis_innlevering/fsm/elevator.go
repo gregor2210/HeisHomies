@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 )
 
 func GetMotorDirectionFromDirn(dirn Dirn) elevio.MotorDirection {
@@ -82,21 +81,6 @@ func SetObstructionStatus(status bool) {
 		StopObstrTimer()
 	}
 	fmt.Println("Obstruction status set to:", status)
-}
-
-func SetElevatorToValidStartPosition() {
-	fmt.Println("Elevator initialized")
-	for {
-		if elevio.GetFloor() == -1 {
-			elevio.SetMotorDirection(elevio.MotorDown)
-		} else {
-			elevio.SetMotorDirection(elevio.MotorStop)
-			break
-		}
-		time.Sleep(_timerPollRate)
-
-	}
-	setAllLights(elevator)
 }
 
 // Fucntion that sets all requests and lights to false
