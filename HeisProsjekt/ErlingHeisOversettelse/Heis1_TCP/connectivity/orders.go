@@ -24,92 +24,74 @@ func PrintOrderRequest(orders []OrderRequests) {
 	}
 }
 
-// Calculating the priority value, return the value
 func CalculatePriorityValue(buttonEvent elevio.ButtonEvent, e fsm.Elevator) int {
-	// This function calculates the priority value.
-	// This value indicates how much an elevator wants a request; a higher value means it wants it more.
-	// It starts with a max value and then proceeds to subtract values.
-	// It will subtract 10 for every floor it is away from the button press.
-	//
-	// It will consider the worst-case number of floors to reach the button.
-	// For example, if the elevator is on the 3rd floor and moving down to the 2nd floor, and an event occurs at the 4th floor,
-	// it will assume the worst-case scenario where it travels to the bottom floor before going up to the button.
-	// Therefore, it will subtract 10 for each floor on its way down and back up to the button.
+	// Calculates how much the elevator wants the request:
+	// 1. Starts at max value.
+	// 2. Subtracts 10 per floor from request.
+	// 3. Penalizes detours and opposite direction, assuming worst-case travel.
 
-	// Larger value == higher order priority.
 	requestFloor := buttonEvent.Floor
 
 	NumFloorsMinus1 := fsm.NumFloors - 1
-	//Calculate how much this elevator wants this request.
 	priorityValue := 2 * 10 * NumFloorsMinus1 // max value
-
-	//DÅRLIG VERSJON, TAR ABSOLUTT AVSTAND
 	deltaFloor := requestFloor - e.Floor
-
 	subVal := int(math.Abs(float64(deltaFloor))) * 10
-	//if elevator dosen ot have a moving dirn
+
+	// Elevator ha no order
 	if int(e.Dirn) == 0 {
-		// Elevator ha no order
-		//-
 
+		// Moving down toward request
 	} else if deltaFloor < 0 && int(e.Dirn) < 0 {
-		// Elevator moves down toward the button, down
 
+		// Same direction: down
 		if buttonEvent.Button == elevio.BtnHallDown {
-			// Button moves in the same direction as the elevator: down
-			//-
 
 		} else {
-			//  Button points in the opposite direction of the elevator: up
+			// Opposite direction: up
 			subVal += buttonEvent.Floor * 2 * 10
 
 		}
 
+		// Moving down, away from request
 	} else if deltaFloor > 0 && int(e.Dirn) < 0 {
-		// Elevator moves down, away from the button
 		subVal += 2 * e.Floor * 10
 
+		// Request is up
 		if buttonEvent.Button == elevio.BtnHallUp {
-			// Button points up
-			//-
+
 		} else {
-			// Button points down
+			// Request is down
 			subVal += (NumFloorsMinus1 - buttonEvent.Floor) * 2 * 10
 
 		}
-
+		// Moving up toward request
 	} else if deltaFloor > 0 && int(e.Dirn) > 0 {
-		// Elevator moves up toward the button, up
 
+		// Same direction: up
 		if buttonEvent.Button == elevio.BtnHallUp {
-			// Button points in the same direction: up
-			//-
 
 		} else {
-			// Knapp peker motsatt vei NED
+			// Opposite direction: down
 			subVal += (NumFloorsMinus1 - buttonEvent.Floor) * 2 * 10
 		}
+		// Moving up, away from request
 	} else if deltaFloor < 0 && int(e.Dirn) > 0 {
-		// Elevator moves up, away from the button
 		subVal += (NumFloorsMinus1 - e.Floor) * 2 * 10
 
+		// Request is up
 		if buttonEvent.Button == elevio.BtnHallUp {
-			// Button points up
 			subVal += buttonEvent.Floor * 2 * 10
 		} else {
-			// Button points down
-			//-
+			// Request is down
 		}
 	}
 
 	priorityValue -= subVal
-
-	//fmt.Println("Priority value:", priorityValue)
 	return priorityValue
 }
 
 func NewOrder(buttonEvent elevio.ButtonEvent) {
-	// Figure out who should take which order.
+	// Figure out who should take which order
 	// Sends the order to the selected elevator
 
 	if DoesOrderExist(buttonEvent) {
@@ -117,11 +99,11 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 		return
 	}
 
+	// Get the list of all priority values
 	var priorityValueIDIndex [NumElevators]int
 	var priorityValueToSort []int
 	onlineElevatorID := GetAllOnlineIds()
 	for _, id := range onlineElevatorID {
-		//Gets list of all priority values
 		var elevator fsm.Elevator
 		if id == ID {
 			elevator = fsm.GetElevatorStruct()
@@ -142,7 +124,6 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 	didOrderGetSent := false
 	// Finding the elevator ID with the highest priority value and attempting to send the order to that elevator
 	for _, priorityValue := range priorityValueToSort {
-		// Find the elevator ID that will receive the order
 		idOfElevatorThatWillGetOrder := ID
 		for i, v := range priorityValueIDIndex {
 			if v == priorityValue {
@@ -150,18 +131,19 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 				break
 			}
 		}
-
+		//Send reqeust to self
 		if idOfElevatorThatWillGetOrder == ID {
-			//Send reqeust to self
 			fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button) // Ikke så fint at dnne er her
 			didOrderGetSent = true
 			break
 
+			//Try sending order to selected elevator
 		} else if SendOrderToSpecificElevator(idOfElevatorThatWillGetOrder, buttonEvent) {
-			//Try to send order to elevator with id
+
 			fmt.Println("ID: ", idOfElevatorThatWillGetOrder, "Got the order!")
 			didOrderGetSent = true
-			// Update its wv backup with this order
+
+			// Update its worldview backup with this order
 			setOrderOnbackup(idOfElevatorThatWillGetOrder, buttonEvent)
 			break
 		}

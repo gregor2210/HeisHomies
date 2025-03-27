@@ -29,7 +29,7 @@ func main() {
 	// Makes sure network connections have time to start properly
 	time.Sleep(2000 * time.Millisecond)
 
-	// Sets elevator to valid start possition
+	// Sets elevator to valid start position
 	fsm.SetElevatorToValidStartPosition()
 
 	fmt.Println("Started!")
@@ -54,16 +54,18 @@ func main() {
 
 }
 
+// Setting up connection with elevator server
 func connectToElevatorserver() {
-	// Setting up connection with elevator server
 
 	var port int
+
+	//if UseIPs true, use deafult port for elevator server
 	if connectivity.UseIPs {
-		//if UseIPs true, use deafult port for elevator server
+
 		port = PortServerID0
 
 	} else {
-		// if UseIPs false, use increasing port nr
+		// if UseIPs false, use increasing port number
 		port = PortServerID0 + connectivity.ID
 	}
 	ip := fmt.Sprintf("localhost:%d", port)
@@ -71,15 +73,15 @@ func connectToElevatorserver() {
 	elevio.Init(ip, fsm.NumFloors)
 }
 
+// Loop for the critical elevator functionality that needs to be handled without delay
 func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, timerTimeOutChan <-chan bool,
 	drvObstr <-chan bool, tcpReceiveChannel <-chan connectivity.WorldviewPackage, obstrErrorChan <-chan bool) {
-	// Loop for the critical elevator functionality that need to be handled without delay
 
 	// Stores the previous floor to detect floor changes
 	prevFloor := -1
 
-	// Logic loop for elevator and communication
-	// The main loop that make sure only one event is handled at a time
+	// Main loop for elevator and network logic
+	// Ensures only one event is handled at a time
 	for {
 
 		select {
@@ -93,20 +95,19 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 				fsm.FsmOnFloorArrival(floor)
 			}
 
-			// -1 is initial condition. Makes sure elevator starts moving
+			// -1 is initial condition: simulate call to start movement
 			if prevFloor == -1 {
-				fmt.Println("Starting elevator movment")
+				fmt.Println("Starting elevator movement")
 				fsm.FsmOnRequestButtonPress(floor, 2)
 			}
 			prevFloor = floor
 
-			// if an elevaotr get to a floor. the motor works!
+			// Floor reached, confirm motor is working
 			connectivity.SetSelfOnline()
 			fsm.SetElevatorMotorError(false)
 
 		// Motor Error detected
 		case errorBool := <-motorErrorChan:
-			// There is an error with the motor
 			fmt.Println("Motor error Error")
 			// if errorBool == True and not the online elevator
 			if errorBool {
@@ -122,9 +123,9 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 					elevio.SetMotorDirection(elevio.MotorDown)
 				}
 			}
-
+		// Obstruction active for too long
 		case errorBool := <-obstrErrorChan:
-			// Obstruction has been on for to long
+
 			fmt.Println("Obstruction error Error")
 			// if errorBool == True and not the online elevator
 			if errorBool && connectivity.SelfOnlyOnline() { // If the elevator is alone
@@ -172,7 +173,7 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 }
 
 func networkFunctionality(drvButtons <-chan elevio.ButtonEvent, worldViewSendTicker <-chan time.Time, offlineUpdateChan <-chan int) {
-	// Loop for the critical network functionality that can use multible seconds to execute
+	// Loop for the critical network functionality that can use multiple seconds to execute
 	for {
 
 		select {

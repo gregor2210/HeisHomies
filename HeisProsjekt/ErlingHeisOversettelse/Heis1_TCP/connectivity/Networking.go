@@ -38,7 +38,6 @@ func init() { // runs when imported
 
 	// This function setup the tcpWorldViewSendIPMatrix
 	// If UseIPs is true, use network IPs
-
 	if UseIPs {
 		if NumElevators > len(IPs) {
 			log.Fatal("NumElevators larger then amount of IPs")
@@ -129,7 +128,7 @@ func deserializeElevator(data []byte) (WorldviewPackage, error) {
 	return wv, err
 }
 
-// Function that closes all connections and sets all elevators offline
+// Close connections and set elevators offline
 func CloseAllConnections() {
 	for server := 0; server < NumElevators-1; server++ {
 		for client := server + 1; client < NumElevators; client++ {
@@ -207,7 +206,7 @@ func tcpServerSetup(incomingElevID int) {
 		fmt.Println("Error in tcpServerSetup:", serverIP, err)
 	}
 
-	// If self has gone offline by the time it accepts a connection, close the connection
+	// Close connection if self went offline before accepting
 	if !IsSelfOnline() {
 		conn.Close()
 
@@ -233,15 +232,13 @@ func tcpClientSetup(elevDialingToID int) {
 	fmt.Printf("Trying to dail to ip: %s\n", clientIP)
 	for {
 		// Will try to dial every second until it connects
-
 		conn, err := net.DialTimeout("tcp", clientIP, TimeOut*time.Second) // Timeout after 2 TimeOut (config) seconds
 		if err != nil {
-			//fmt.Println("Dailing id ", elevDialingToID, "failed, retrying in 1/2 seconds...")
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
 
-		// If self has gone offline by the time it connects, close the connection
+		// Close connection if self went offline before accepting
 		if !IsSelfOnline() {
 			conn.Close()
 			break
@@ -267,7 +264,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 
 	fmt.Println("HANDLE RECEIVE STARTED, ID: " + fmt.Sprint(connectedElevatorID))
 	for {
-		if !IsSelfOnline() { // not online
+		if !IsSelfOnline() {
 			fmt.Println("Self offline, closing receive goroutine and conn")
 			SetElevatorOffline(connectedElevatorID)
 			setReceiverRunningMatrix(server, client, false)
@@ -313,9 +310,7 @@ func handleReceive(conn net.Conn, tcpReceiveChannel chan WorldviewPackage, conne
 			return
 		}
 
-		// Store backup worldview from incomming elevator
 		StoreWorldview(receivedWorldViewPackage.ElevatorID, receivedWorldViewPackage)
-
 		tcpReceiveChannel <- receivedWorldViewPackage
 	}
 
@@ -339,7 +334,7 @@ func SendWorldView() {
 
 	var wg sync.WaitGroup
 
-	// Send to elevators where we are server
+	// Send to elevators where this node is server
 	for connectedElevatorID := ID + 1; connectedElevatorID < NumElevators; connectedElevatorID++ {
 		if IsOnline(connectedElevatorID) {
 			wg.Add(1)
@@ -383,10 +378,9 @@ func SendWorldView() {
 		}
 	}
 
-	// Wait for all goroutines to finish
 	wg.Wait()
 
-	// Send to elevators where we are client
+	// Send to elevators where this node is client
 	for connectedElevatorID := 0; connectedElevatorID < ID; connectedElevatorID++ {
 		if IsOnline(connectedElevatorID) {
 			wg.Add(1)

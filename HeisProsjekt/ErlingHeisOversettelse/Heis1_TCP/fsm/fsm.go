@@ -35,12 +35,6 @@ func setElevatorObtruction(obstruction bool) {
 }
 
 func setAllLights(elevator Elevator) {
-	/*
-		for floor := 0; floor < NumFloors; floor++ {
-			for btn := 0; btn < NumButtons; btn++ {
-				elevio.SetButtonLamp(elevio.ButtonType(btn), floor, elevator.Requests[floor][btn])
-			}
-		}*/
 	for floor := 0; floor < NumFloors; floor++ {
 		elevio.SetButtonLamp(elevio.ButtonType(2), floor, elevator.Requests[floor][2])
 	}
