@@ -15,7 +15,7 @@ func SetAllLights() {
 	// Creates a new request matrix with all button presses, then updates their statuses
 	var requests [fsm.NumFloors][fsm.NumButtons - 1]bool
 	onlineIDs := GetAllOnlineIds()
-
+	onlineIDs = append(onlineIDs, ID) // Should allways include self
 	for _, id := range onlineIDs {
 		var req [fsm.NumFloors][fsm.NumButtons]bool // deafult false
 

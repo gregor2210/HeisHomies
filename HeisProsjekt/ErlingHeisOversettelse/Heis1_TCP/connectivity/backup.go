@@ -2,7 +2,6 @@ package connectivity
 
 import (
 	"Driver-go/elevio"
-	"Driver-go/fsm"
 )
 
 // Start backupprosess for dead elevator
@@ -29,9 +28,14 @@ func StartBackupProcess(deadElevID int) {
 
 }
 
-// Start backupprosess for dead elevator
-func StartMotorErrorBackupProcess() {
+// Start backupprosess for broken elevator
+func StartErrorProcess() {
+	//selfOnlyOnline := SelfOnlyOnline()
 	SetSelfOffline()
 	CloseAllConnections()
-	fsm.ClearAllRequests()
+	//if !selfOnlyOnline {
+	// If there were other elevators online
+	// Then we know there is a backup of the requests
+	//fsm.ClearAllRequests()
+	//}
 }

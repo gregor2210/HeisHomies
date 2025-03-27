@@ -5,18 +5,18 @@ import (
 	"time"
 )
 
-// IF THIS CHANGES, REMEMBER TO UPDATE IT IN ELEVATOR:IO.GO AS WELL
-const _pollRate = 20 * time.Millisecond
-
-var timerEndTime time.Time
-var timerActive bool
+var (
+	timerTimeOutChan = make(chan bool)
+	timerEndTime     time.Time
+	timerActive      bool
+)
 
 // Polls the timer and signals on TimeOut
-func PollTimerTimeOut(receiver chan<- bool) {
+func PollTimerTimeOut() {
 	for {
-		time.Sleep(_pollRate) // Poll rate, adjust as needed
+		time.Sleep(_timerPollRate) // Poll rate, adjust as needed
 		if TimerTimedOut() {
-			receiver <- true
+			timerTimeOutChan <- true
 		}
 	}
 }

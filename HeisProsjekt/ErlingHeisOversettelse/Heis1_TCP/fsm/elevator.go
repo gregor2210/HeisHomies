@@ -46,6 +46,7 @@ type Elevator struct {
 	Requests           [NumFloors][NumButtons]bool
 	DoorOpenDuration_s float64
 	Obstruction        bool
+	MotorError         bool
 }
 
 // Elevator initializer function
@@ -58,6 +59,7 @@ func NewElevator() Elevator {
 		Requests:           [NumFloors][NumButtons]bool{}, // No requests initially
 		DoorOpenDuration_s: 3.0,
 		Obstruction:        false,
+		MotorError:         false,
 	}
 
 	return elevatorSetup
@@ -74,7 +76,13 @@ func PrintElevator(elevator Elevator) {
 }
 
 func SetObstructionStatus(status bool) {
-	elevator.Obstruction = status
+	setElevatorObtruction(status)
+	if status {
+		StartObstrTimer()
+	} else {
+		StopObstrTimer()
+	}
+	fmt.Println("Obstruction status set to:", status)
 }
 
 func SetElevatorToValidStartPosition() {
@@ -86,7 +94,7 @@ func SetElevatorToValidStartPosition() {
 			elevio.SetMotorDirection(elevio.MotorStop)
 			break
 		}
-		time.Sleep(_pollRate)
+		time.Sleep(_timerPollRate)
 
 	}
 	setAllLights(elevator)
@@ -97,4 +105,3 @@ func ClearAllRequests() {
 	elevator.Requests = [NumFloors][NumButtons]bool{}
 	setAllLights(elevator)
 }
-

@@ -16,6 +16,24 @@ func GetElevatorStruct() Elevator {
 	return elevator
 }
 
+func SetElevatorMotorError(motorError bool) {
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
+	elevator.MotorError = motorError
+}
+
+func GetElevatorMotorError() bool {
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
+	return elevator.MotorError
+}
+
+func setElevatorObtruction(obstruction bool) {
+	elevatorMutex.Lock()
+	defer elevatorMutex.Unlock()
+	elevator.Obstruction = obstruction
+}
+
 func setAllLights(elevator Elevator) {
 	/*
 		for floor := 0; floor < NumFloors; floor++ {
