@@ -25,6 +25,12 @@ func GetWorldView(id int) WorldviewPackage {
 	return worldViewBackup[id]
 }
 
+func setOrderOnbackup(id int, buttonEvent elevio.ButtonEvent) {
+	worldViewBackupMutex.Lock()
+	defer worldViewBackupMutex.Unlock()
+	worldViewBackup[id].Elevator.Requests[buttonEvent.Floor][int(buttonEvent.Button)] = true
+}
+
 // Returns true if the given order exists in any online elevator, including self
 func DoesOrderExist(buttonEvent elevio.ButtonEvent) bool {
 	floor := buttonEvent.Floor

@@ -161,6 +161,8 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 			//Try to send order to elevator with id
 			fmt.Println("ID: ", idOfElevatorThatWillGetOrder, "Got the order!")
 			didOrderGetSent = true
+			// Update its wv backup with this order
+			setOrderOnbackup(idOfElevatorThatWillGetOrder, buttonEvent)
 			break
 		}
 

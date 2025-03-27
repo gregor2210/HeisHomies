@@ -11,7 +11,7 @@ const (
 	NumElevators = 3
 
 	// TimeOut for send and receive. If exceeded, connection is lost.
-	TimeOut = 8 //seconds
+	TimeOut = 10 //seconds
 
 	// Worldview max package size
 	MaxPacketSize = 1500
