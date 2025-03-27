@@ -32,17 +32,17 @@ Before running the program, choose what run mode you want to use.
 
 - Find the ip using `hostname -I`
 
-You can chainge all the settings above in `configConnectivity.go`.
+You can change all the settings above in `configConnectivity.go`.
 
 ### Other Configs 
 In`config_connectivity.go`: 
 1) You can change the `TimeOut` value if you want the program to be more or less aggressive in handling connection TimeOuts and packet loss scenarios.
 
 In `configFsm.go`:
-1) You can chainge the `_timerPollRate`, `_motorErrorDuration`, `_obstrErrorDuration`, `NumFloors`
+1) You can change the `_timerPollRate`, `_motorErrorDuration`, `_obstrErrorDuration`, `NumFloors`
 
 In `main.go`:
-1) you can chainge the local port `PortServerID0` that acceses your elevatorserver. If you are running with simulators the port of the different simulators whould be `PortServerID0 + ID`
+1) you can change the local port `PortServerID0` that acceses your elevatorserver. If you are running with simulators the port of the different simulators whould be `PortServerID0 + ID`
 
 
 
