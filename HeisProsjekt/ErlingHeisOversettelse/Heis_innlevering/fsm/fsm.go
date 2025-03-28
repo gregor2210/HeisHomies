@@ -123,8 +123,6 @@ func FsmOnDoorTimeOut() {
 
 			elevator = requestsClearAtCurrentFloor(elevator)
 
-			setAllLights(elevator)
-
 		case ElevMoving:
 			elevio.SetDoorOpenLamp(false)
 			elevio.SetMotorDirection(GetMotorDirectionFromDirn(elevator.Dirn))
@@ -137,5 +135,6 @@ func FsmOnDoorTimeOut() {
 	default:
 		// Nothing to do if the state is not ElevDoorOpen
 	}
+	setAllLights(elevator)
 
 }
