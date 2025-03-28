@@ -15,9 +15,8 @@ var (
 // Polls the timer and signals on TimeOut
 func PollMotorTimerTimeOut() {
 	for {
-		time.Sleep(_timerPollRate) // Poll rate, adjust as needed
+		time.Sleep(_timerPollRate) 
 		if MotorTimerTimedOut() {
-			//
 			fmt.Println("Motor error timer timed out")
 			motorErrorChan <- true
 			motorTimerActive = false
@@ -42,7 +41,7 @@ func StopMotorErrorTimer() {
 	motorTimerActive = false
 }
 
-// Returns true if timer expired and no obstruction
+// Returns true if timer expires and no obstruction
 func MotorTimerTimedOut() bool {
 	return motorTimerActive && time.Now().After(motorTimerEndTime)
 }

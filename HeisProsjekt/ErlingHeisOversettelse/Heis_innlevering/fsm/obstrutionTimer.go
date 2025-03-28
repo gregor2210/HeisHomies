@@ -14,9 +14,8 @@ var (
 // Polls the timer and signals on TimeOut
 func PollObstrTimerTimeOut() {
 	for {
-		time.Sleep(_timerPollRate) // Poll rate, adjust as needed
+		time.Sleep(_timerPollRate) 
 		if ObstrTimerTimedOut() {
-			//
 			fmt.Println("Obs error timer timed out")
 			obstrErrorChan <- true
 			obstrTimerActive = false
@@ -39,7 +38,7 @@ func StopObstrTimer() {
 	obstrTimerActive = false
 }
 
-// Returns true if timer expired and no obstruction
+// Returns true if timer expires and no obstruction
 func ObstrTimerTimedOut() bool {
 	return obstrTimerActive && time.Now().After(obstrTimerEndTime)
 }

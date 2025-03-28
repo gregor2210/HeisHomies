@@ -14,7 +14,7 @@ var (
 // Polls the timer and signals on TimeOut
 func PollTimerTimeOut() {
 	for {
-		time.Sleep(_timerPollRate) // Poll rate, adjust as needed
+		time.Sleep(_timerPollRate) 
 		if TimerTimedOut() {
 			timerTimeOutChan <- true
 		}
@@ -38,7 +38,7 @@ func TimerStop() {
 	timerActive = false
 }
 
-// Returns true if timer expired and no obstruction
+// Returns true if timer expires and no obstruction
 func TimerTimedOut() bool {
 	return timerActive && getWallTime().After(timerEndTime) && !(elevator.Obstruction)
 }

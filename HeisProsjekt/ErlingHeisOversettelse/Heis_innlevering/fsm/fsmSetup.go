@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// Channel to receive timer timeout events
+// Channel setup to receive timer timeout events
 func FsmThreadsSetup() (chan bool, chan bool, chan bool) {
 	fmt.Println("Setting up FSM threads")
 
