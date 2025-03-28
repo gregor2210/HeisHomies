@@ -98,6 +98,7 @@ func SetElevatorOffline(elevatorID int) {
 // Return true if elevator is online
 func IsOnline(elevatorID int) bool {
 	isOnlineMutex.Lock()
+
 	defer isOnlineMutex.Unlock()
 	if elevatorID >= 0 && elevatorID < len(isOnline) {
 		return isOnline[elevatorID]
