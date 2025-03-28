@@ -91,8 +91,7 @@ func CalculatePriorityValue(buttonEvent elevio.ButtonEvent, e fsm.Elevator) int 
 }
 
 func NewOrder(buttonEvent elevio.ButtonEvent) {
-	// Figure out who should take which order
-	// Sends the order to the selected elevator
+	// Determines the best elevator and assigns it the new order
 
 	if DoesOrderExist(buttonEvent) {
 		fmt.Println("Order allready exist")
