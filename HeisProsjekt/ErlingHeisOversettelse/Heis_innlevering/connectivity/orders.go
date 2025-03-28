@@ -132,7 +132,7 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 		}
 		//Send reqeust to self
 		if idOfElevatorThatWillGetOrder == ID {
-			fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button) // Ikke så fint at dnne er her
+			fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button)
 			didOrderGetSent = true
 			break
 
@@ -141,9 +141,6 @@ func NewOrder(buttonEvent elevio.ButtonEvent) {
 
 			fmt.Println("ID: ", idOfElevatorThatWillGetOrder, "Got the order!")
 			didOrderGetSent = true
-
-			// Update its worldview backup with this order
-			//setOrderOnbackup(idOfElevatorThatWillGetOrder, buttonEvent)
 			break
 		}
 
