@@ -30,7 +30,7 @@ func main() {
 	time.Sleep(2000 * time.Millisecond)
 
 	// Sets elevator to valid start position
-	fsm.SetElevatorToValidStartPosition()
+	elevio.SetElevatorToValidStartPosition()
 
 	fmt.Println("Started!")
 
@@ -40,12 +40,12 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		elevatorFunctionality(drvFloors, motorErrorChan, timerTimeOutChan, drvObstr, tcpReceiveChannel, obstrErrorChan)
+		criticalElevatorFunctionality(drvFloors, motorErrorChan, timerTimeOutChan, drvObstr, tcpReceiveChannel, obstrErrorChan)
 	}()
 
 	go func() {
 		defer wg.Done()
-		networkFunctionality(drvButtons, worldViewSendTicker, offlineUpdateChan)
+		networkHandeling(drvButtons, worldViewSendTicker, offlineUpdateChan)
 	}()
 
 	wg.Wait()
@@ -72,10 +72,10 @@ func connectToElevatorserver() {
 }
 
 // Loop for the critical elevator functionality that needs to be handled without delay
-func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, timerTimeOutChan <-chan bool,
+func criticalElevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, timerTimeOutChan <-chan bool,
 	drvObstr <-chan bool, tcpReceiveChannel <-chan connectivity.WorldviewPackage, obstrErrorChan <-chan bool) {
 
-	// Stores the previous floor to detect floor changes
+	// To detect floor changes
 	prevFloor := -1
 
 	// Main loop for elevator and network logic
@@ -93,7 +93,7 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 				fsm.FsmOnFloorArrival(floor)
 			}
 
-			// -1 is initial condition: simulate call to start movement
+			// -1 is initial condition: simulate call to start movement when elevator starts
 			if prevFloor == -1 {
 				fmt.Println("Starting elevator movement")
 				fsm.FsmOnRequestButtonPress(floor, 2)
@@ -104,39 +104,40 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 			connectivity.SetSelfOnline()
 			fsm.SetElevatorMotorError(false)
 
+		// Incoming worldview package from another elevator
+		case receivedWorldView := <-tcpReceiveChannel:
+			connectivity.StoreWorldview(receivedWorldView.ElevatorID, receivedWorldView)
+			if receivedWorldView.OrderBool {
+				fmt.Println("Order received")
+				fsm.FsmOnRequestButtonPress(receivedWorldView.Order.Floor, receivedWorldView.Order.Button)
+			}
 		// Motor Error detected
 		case errorBool := <-motorErrorChan:
 			fmt.Println("Motor error Error")
-			// if errorBool == True and not the online elevator
 			if errorBool {
 				fmt.Println("Elevator has motor problems. Running start backup")
 				fsm.SetElevatorMotorError(true)
-				connectivity.StartErrorProcess()
-
-				// Resets motor direction of elevator
-				elevio.SetMotorDirection(elevio.MotorStop)
-				if prevFloor <= 1 {
-					elevio.SetMotorDirection(elevio.MotorUp)
-				} else {
-					elevio.SetMotorDirection(elevio.MotorDown)
-				}
+				connectivity.DisableComunicaton()
+				elevio.MoveElevatorToFloor(prevFloor)
 			}
 		// Obstruction active for too long
 		case errorBool := <-obstrErrorChan:
-
-			fmt.Println("Obstruction error Error")
-			// if errorBool == True and not the online elevator
-			if errorBool && connectivity.SelfOnlyOnline() { // If the elevator is alone
-				fmt.Println("Elevator has obstruction problems but is alone. Starting new timer")
+			if errorBool {
+				fmt.Println("Elevator has obstruction problems Disable communication")
 				fsm.StartObstrTimer()
-				connectivity.SetSelfOffline()
-				connectivity.CloseAllConnections()
-
-			} else if errorBool && !connectivity.SelfOnlyOnline() { // If the elevator is not alone
-				fmt.Println("Elevator has obstruction problems. Setting selfe offline and closing all connections")
-				connectivity.StartErrorProcess()
-
+				connectivity.DisableComunicaton()
 			}
+
+		// If there is an obstruction event
+		case obstrEventBool := <-drvObstr:
+			fmt.Println("Obstruction event toggle")
+			fsm.SetObstructionStatus(obstrEventBool)
+
+			motorError := fsm.GetElevatorMotorError()
+			if !motorError { // If there is no motor error
+				connectivity.SetSelfOnline()
+			}
+			fsm.TimerDoorStart(3)
 
 		// Door TimeOut after 3 seconds
 		case timerBool := <-timerTimeOutChan:
@@ -145,37 +146,16 @@ func elevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, tim
 				fsm.TimerStop()
 				fsm.FsmOnDoorTimeOut()
 			}
-
-		// If there is an obstruction event
-		case obstrEventBool := <-drvObstr:
-			fmt.Println("Obstruction event toggle")
-			fsm.SetObstructionStatus(obstrEventBool)
-			motorError := fsm.GetElevatorMotorError()
-			if !motorError { // If there is no motor error
-				connectivity.SetSelfOnline()
-			}
-			fsm.TimerDoorStart(3)
-
-		// Incoming worldview package from another elevator
-		case receivedWorldView := <-tcpReceiveChannel:
-			connectivity.StoreWorldview(receivedWorldView.ElevatorID, receivedWorldView)
-
-			// If the received world view contains an order
-			if receivedWorldView.OrderBool {
-				fmt.Println("Order received")
-				fsm.FsmOnRequestButtonPress(receivedWorldView.Order.Floor, receivedWorldView.Order.Button)
-			}
 		}
 		connectivity.SetAllLights()
 	}
 }
 
-func networkFunctionality(drvButtons <-chan elevio.ButtonEvent, worldViewSendTicker <-chan time.Time, offlineUpdateChan <-chan int) {
-	// Loop for the critical network functionality that can use multiple seconds to execute
+// Loop for the critical network functionality that can use multiple seconds to execute
+func networkHandeling(drvButtons <-chan elevio.ButtonEvent, worldViewSendTicker <-chan time.Time, offlineUpdateChan <-chan int) {
+
 	for {
-
 		select {
-
 		// Button press event
 		case buttonEvent := <-drvButtons:
 			fmt.Printf("\nButton event: %+v\n", buttonEvent)
@@ -186,15 +166,12 @@ func networkFunctionality(drvButtons <-chan elevio.ButtonEvent, worldViewSendTic
 				connectivity.NewOrder(buttonEvent)
 
 			} else {
-
-				// Handles request if no other elevators are online or it’s a cab request
 				fmt.Println("No other online elevators or a cab call. Taking order")
 				fsm.FsmOnRequestButtonPress(buttonEvent.Floor, buttonEvent.Button)
 			}
 
 		// World view ticker happens every 100 milliseconds
 		case <-worldViewSendTicker:
-			// Attempt to send world view
 			connectivity.SendWorldView()
 
 		// If an elevator goes offline, retrieve its ID and take over its orders
