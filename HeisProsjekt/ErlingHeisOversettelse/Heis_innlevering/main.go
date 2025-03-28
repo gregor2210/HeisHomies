@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	PortServerID0 = 15657
+	PortServerID0    = 15657
+	DelayBeforeStart = 2000 // Milliseconds
 )
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 	timerTimeOutChan, motorErrorChan, obstrErrorChan := fsm.FsmThreadsSetup()
 
 	// Makes sure network connections have time to start properly
-	time.Sleep(2000 * time.Millisecond)
+	time.Sleep(DelayBeforeStart * time.Millisecond)
 
 	// Sets elevator to valid start position
 	elevio.SetElevatorToValidStartPosition()

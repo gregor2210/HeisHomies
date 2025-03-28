@@ -208,7 +208,7 @@ func tcpServerSetup(incomingElevID int) {
 
 	// Close connection if self went offline before accepting
 	if !IsSelfOnline() {
-		conn.Close()
+		defer conn.Close()
 
 	} else {
 		// If self is online, set the connection and the elevator to online}
