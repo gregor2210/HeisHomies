@@ -57,13 +57,10 @@ func connectToElevatorserver() {
 
 	var port int
 
-	//if UseIPs true, use deafult port for elevator server
 	if connectivity.UseIPs {
-
 		port = PortServerID0
 
 	} else {
-		// if UseIPs false, use increasing port number
 		port = PortServerID0 + connectivity.ID
 	}
 	ip := fmt.Sprintf("localhost:%d", port)
@@ -75,11 +72,10 @@ func connectToElevatorserver() {
 func criticalElevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan bool, timerTimeOutChan <-chan bool,
 	drvObstr <-chan bool, tcpReceiveChannel <-chan connectivity.WorldviewPackage, obstrErrorChan <-chan bool) {
 
-	// To detect floor changes
-	prevFloor := -1
 
-	// Main loop for elevator and network logic
-	// Ensures only one event is handled at a time
+	prevFloor := -1 // Initial condition: no floor registered yet
+
+	// Main loop: handles elevator and network logic, one event at a time
 	for {
 
 		select {
@@ -93,7 +89,7 @@ func criticalElevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan b
 				fsm.FsmOnFloorArrival(floor)
 			}
 
-			// -1 is initial condition: simulate call to start movement when elevator starts
+			// On startup: if no previous floor, simulate a button press to trigger movement
 			if prevFloor == -1 {
 				fmt.Println("Starting elevator movement")
 				fsm.FsmOnRequestButtonPress(floor, 2)
@@ -128,13 +124,13 @@ func criticalElevatorFunctionality(drvFloors <-chan int, motorErrorChan <-chan b
 				connectivity.DisableComunicaton()
 			}
 
-		// If there is an obstruction event
+		// Obstruction event detected
 		case obstrEventBool := <-drvObstr:
 			fmt.Println("Obstruction event toggle")
 			fsm.SetObstructionStatus(obstrEventBool)
 
 			motorError := fsm.GetElevatorMotorError()
-			if !motorError { // If there is no motor error
+			if !motorError { 
 				connectivity.SetSelfOnline()
 			}
 			fsm.TimerDoorStart(3)
