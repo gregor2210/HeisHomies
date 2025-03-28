@@ -23,7 +23,7 @@ func PollObstrTimerTimeOut() {
 	}
 }
 
-// Starts motor error timer if behaviour is not MotorStop
+// Starts obstruction timer
 func StartObstrTimer() {
 	var duration float64 = _obstrErrorDuration
 	fmt.Println("Obs timer started, for:", duration)
