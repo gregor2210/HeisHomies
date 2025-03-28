@@ -2,7 +2,7 @@ package elevio
 
 import "fmt"
 
-func InitIOHandling() (chan ButtonEvent, chan int, chan bool) {
+func ElevatorIoSetup() (chan ButtonEvent, chan int, chan bool) {
 	fmt.Println("Initializing IO handling")
 	drvbuttons := make(chan ButtonEvent)
 	drvFloors := make(chan int)

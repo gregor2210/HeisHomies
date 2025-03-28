@@ -18,7 +18,7 @@ func main() {
 	connectToElevatorserver()
 
 	// Elevator IO setup 
-	drvButtons, drvFloors, drvObstr := elevio.InitIOHandling()
+	drvButtons, drvFloors, drvObstr := elevio.ElevatorIoSetup()
 
 	// Networking setup
 	tcpReceiveChannel, worldViewSendTicker, offlineUpdateChan := connectivity.ConnectivitySetup()

@@ -17,7 +17,6 @@ const (
 	MaxPacketSize = 1500
 
 	// UseIPs is set to true if you are gonna use different computer.
-	// Remember to set correct ips in IPs
 	UseIPs = false
 )
 
@@ -25,7 +24,7 @@ var (
 	ID int //default 0
 
 	// IPs of the different computers.
-	// Computer with id 0 has inex 0 in this list
+	// Computer with id 0 has index 0 in this list
 	IPs = [NumElevators]string{"10.100.23.28", "10.100.23.33", "10.100.23.29"}
 )
 
