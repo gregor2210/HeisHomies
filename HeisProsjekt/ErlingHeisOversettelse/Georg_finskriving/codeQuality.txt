@@ -1,0 +1,30 @@
+
+//Naming
+
+camelCase: 
+ - logical or conceptual entities
+ snake_case:
+ - Hardware or low-level interaction
+ - (driver elments)
+--------------------------------------
+ Spesifikt for go:
+ - Funksjoner
+    camelCase 
+    PascalCase ( funksjoner som skal eksporteres)
+
+- variabler
+    camelCase
+    PascalCase
+- Konstanter
+    UPPER_SNAKE_CASE → Brukes ofte for konstanter
+    amelCase/PascalCase hvis det gir mer mening i konteksten
+
+- Klasser/structs
+    PascalCase → Brukes for eksporterte struct-navn
+    camelCase → Brukes for felt som er private
+    PascalCase → Brukes for felt som er offentlige
+
+- Pakker of Filnavn
+    snake_case → Brukes for filnavn og pakker (Go støtter ikke kebab-case)
+    Pakkens navn bør være kort, enkelt og beskrive innholdet
+    Ikke bruk package i navn på pakker eller filer
