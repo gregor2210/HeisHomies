@@ -17,13 +17,13 @@ func main() {
 
 	connectToElevatorserver()
 
-	// Communication with elevator server setup
+	// Elevator IO setup 
 	drvButtons, drvFloors, drvObstr := elevio.InitIOHandling()
 
 	// Networking setup
 	tcpReceiveChannel, worldViewSendTicker, offlineUpdateChan := connectivity.ConnectivitySetup()
 
-	// Sets up timer
+	// Timer setup
 	timerTimeOutChan, motorErrorChan, obstrErrorChan := fsm.FsmThreadsSetup()
 
 	// Makes sure network connections have time to start properly
