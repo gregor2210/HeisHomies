@@ -357,7 +357,7 @@ func SendWorldView() {
 				err = binary.Write(serverConn, binary.BigEndian, packetLength)
 				if err != nil {
 					fmt.Println("Error sending packetlength to connected elevator, connection lost: ", err)
-					SetElevatorOffline(connectedElevatorID) // setting status of connected elevator to offline
+					SetElevatorOffline(connectedElevatorID) 
 					serverConn.Close()
 					return
 				}
@@ -366,7 +366,7 @@ func SendWorldView() {
 				_, err = serverConn.Write(serializedWorldViewPackage)
 				if err != nil {
 					fmt.Println("Error sending, connection lost: ", err)
-					SetElevatorOffline(connectedElevatorID) // setting status of connected elevator to offline
+					SetElevatorOffline(connectedElevatorID) 
 					fmt.Println("Elevator was set to offline")
 					serverConn.Close()
 					return
@@ -455,7 +455,7 @@ func SendOrderToSpecificElevator(receiverElev int, order elevio.ButtonEvent) boo
 	}
 
 	// Finding package length
-	packetLength := uint32(len(serializedWorldViewPackage)) // uint32 is 4 bytes
+	packetLength := uint32(len(serializedWorldViewPackage)) 
 
 	err = binary.Write(conn, binary.BigEndian, packetLength)
 	if err != nil {
