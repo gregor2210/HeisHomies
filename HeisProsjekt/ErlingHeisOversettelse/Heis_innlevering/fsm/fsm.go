@@ -118,8 +118,7 @@ func FsmOnDoorTimeOut() {
 
 		switch elevator.Behaviour {
 		case ElevDoorOpen:
-			// Restart door timer
-			TimerDoorStart(elevator.DoorOpenDuration_s)
+			TimerDoorStart(elevator.DoorOpenDuration_s)// Restart door timer
 
 			elevator = requestsClearAtCurrentFloor(elevator)
 
